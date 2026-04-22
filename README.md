@@ -1,16 +1,106 @@
-# voice_phishing
+# Safe-Call AI (voice_phishing)
 
-A new Flutter project.
+Safe-Call AI is a Flutter mobile prototype for helping foreign residents in Korea handle suspicious phone calls safely.
+
+The app demonstrates:
+
+- real-time phishing risk monitoring UI during a call,
+- instant translation display in user-selected language,
+- visual ARS (automated response system) flow,
+- quick emergency dialing,
+- recent call log with risk summary.
+
+This repository currently contains an MVP/demo experience with simulated scenarios.
+
+## Key Features
+
+- Onboarding flow with language selection
+  - Burmese, Vietnamese, Chinese, English
+- Dashboard with protection status
+  - Toggle AI protection on/off
+  - Demo scenario launch buttons
+- In-call protection screen
+  - Risk meter that updates with score
+  - Warning overlay when risk threshold is high
+  - Translation bubble in selected language
+  - ARS visual menu mode
+- Emergency quick dial row
+  - Direct tel: launch for major emergency and reporting numbers
+- Settings
+  - Change language
+  - Toggle real-time protection
+
+## Tech Stack
+
+- Flutter (Material 3)
+- Dart
+- State management: provider
+- UI motion: flutter_animate
+- Typography: google_fonts
+- Device integrations:
+  - url_launcher (tel links)
+  - permission_handler
+  - shared_preferences
+
+## Project Structure
+
+- lib/main.dart: app entry, theme, providers, routes
+- lib/providers/app_provider.dart: core app state and demo simulation logic
+- lib/screens/: onboarding, dashboard, call, settings
+- lib/widgets/: risk meter, warning overlay, ARS menu, emergency row, etc.
+- lib/theme/app_colors.dart: shared color system
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### Prerequisites
 
-A few resources to get you started if this is your first Flutter project:
+- Flutter SDK (stable)
+- Dart SDK (bundled with Flutter)
+- Xcode (for iOS) and/or Android Studio with SDK tools
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Check your setup:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+flutter --version
+flutter doctor
+```
+
+### Install Dependencies
+
+```bash
+flutter pub get
+```
+
+### Run the App
+
+```bash
+flutter run
+```
+
+## Demo Flow
+
+1. Complete onboarding and select a language.
+2. Open Dashboard.
+3. Tap one of the Demo Scenarios:
+   - Phishing Call Demo
+   - Bank ARS Demo
+4. Observe risk meter and translation updates on call screen.
+5. End call and review result in Recent Calls.
+
+## Current Status
+
+- This is an MVP/prototype focused on UX and call-protection flow simulation.
+- Risk scoring and call content are currently mocked for demo behavior.
+- Production integrations (telephony interception, real ASR/translation backend, live anti-fraud model) are not included yet.
+
+## Roadmap Ideas
+
+- Integrate on-device or server ASR for real-time transcription
+- Add multilingual translation pipeline
+- Connect risk engine to fraud detection model/service
+- Persist call logs and settings locally or via backend
+- Add stronger privacy controls and consent flow
+
+## License
+
+No license file is currently included. Add a LICENSE file if you want to publish usage terms.
