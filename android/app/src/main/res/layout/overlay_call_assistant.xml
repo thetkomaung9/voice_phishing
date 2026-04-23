@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="#E8101820"
+    android:padding="14dp"
+    android:elevation="8dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <!-- ── Header ──────────────────────────────────────────────── -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:text="🛡️  AI is monitoring your calls"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/btnDismiss"
+            android:text="✕"
+            android:textSize="12sp"
+            android:textColor="#AAFFFFFF"
+            android:background="@null"
+            android:padding="4dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <!-- ── Phishing Warning (hidden when safe) ─────────────────── -->
+    <TextView
+        android:id="@+id/tvWarning"
+        android:visibility="gone"
+        android:textColor="#FF6B6B"
+        android:textStyle="bold"
+        android:textSize="13sp"
+        android:background="#33FF0000"
+        android:padding="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <!-- ── Live Transcript ─────────────────────────────────────── -->
+    <TextView
+        android:id="@+id/tvTranscript"
+        android:hint="Listening…"
+        android:textColorHint="#55FFFFFF"
+        android:textColor="#DDFFFFFF"
+        android:textSize="12sp"
+        android:maxLines="3"
+        android:ellipsize="start"
+        android:layout_marginTop="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <!-- ── Translation ─────────────────────────────────────────── -->
+    <TextView
+        android:id="@+id/tvTranslation"
+        android:hint="Translation will appear here"
+        android:textColorHint="#55FFFFFF"
+        android:textColor="#4FC3F7"
+        android:textSize="12sp"
+        android:maxLines="3"
+        android:ellipsize="start"
+        android:layout_marginTop="4dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <!-- ── Emergency Buttons ───────────────────────────────────── -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_marginTop="12dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:id="@+id/btn112"
+            android:text="📞 112"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#C62828"
+            android:textSize="12sp"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp" />
+
+        <Button
+            android:id="@+id/btn119"
+            android:text="📞 119"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#E65100"
+            android:textSize="12sp"
+            android:layout_marginStart="8dp"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp" />
+    </LinearLayout>
+
+</LinearLayout>

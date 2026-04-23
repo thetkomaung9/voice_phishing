@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/app_provider.dart';
+import '../services/native_channel_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/protection_toggle.dart';
 import '../widgets/emergency_dial_row.dart';
 import '../widgets/recent_calls_list.dart';
-import 'call_screen.dart';
 import 'settings_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
+
+  static final NativeChannelService _native = NativeChannelService();
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +208,7 @@ class DashboardScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Demo Scenarios',
+            'Use Safe-Call',
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 13,
@@ -218,34 +220,67 @@ class DashboardScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: _DemoButton(
-                  icon: Icons.warning_amber_rounded,
-                  label: 'Phishing\nCall Demo',
+                  icon: Icons.phone_in_talk_rounded,
+                  label: 'Enable Real\nCall Protection',
                   color: AppColors.danger,
-                  onTap: () {
-                    provider.simulatePhishingCall();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const CallScreen()),
-                    );
+                  subtitle: 'Use Samsung/Android call UI with Safe-Call screening',
+                  onTap: () async {
+                    await _native.openCallScreeningSettings();
                   },
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _DemoButton(
-                  icon: Icons.dialpad_rounded,
-                  label: 'Bank ARS\nDemo',
+                  icon: Icons.layers_rounded,
+                  label: 'Allow Overlay\nTranslation',
                   color: AppColors.accent,
-                  onTap: () {
-                    provider.simulateARSCall();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const CallScreen()),
-                    );
+                  subtitle: 'Show live phishing warnings and translation over calls',
+                  onTap: () async {
+                    await _native.requestOverlayPermission();
                   },
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            ),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.settings_suggest_rounded,
+                    color: AppColors.textSecondary,
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Open setup to manage language, microphone, and protection settings',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: Colors.white38,
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -277,11 +312,13 @@ class DashboardScreen extends StatelessWidget {
 class _DemoButton extends StatelessWidget {
   final IconData icon;
   final String label;
+  final String subtitle;
   final Color color;
   final VoidCallback onTap;
   const _DemoButton({
     required this.icon,
     required this.label,
+    required this.subtitle,
     required this.color,
     required this.onTap,
   });
@@ -308,6 +345,15 @@ class _DemoButton extends StatelessWidget {
                 color: color,
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                color: Colors.white54,
+                fontSize: 11,
                 height: 1.4,
               ),
             ),

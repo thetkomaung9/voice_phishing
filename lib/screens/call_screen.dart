@@ -37,6 +37,7 @@ class CallScreen extends StatelessWidget {
           ),
           if (provider.isWarning)
             PhishingWarningOverlay(
+              assessment: provider.assessment,
               onDismiss: () => provider.dismissWarning(),
               onEndCall: () {
                 provider.endCall();
@@ -137,11 +138,11 @@ class CallScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  provider.translationText.isEmpty
+                  provider.transcriptText.isEmpty
                       ? 'Listening...'
-                      : provider.translationText,
+                      : provider.transcriptText,
                   style: TextStyle(
-                    color: provider.translationText.isEmpty
+                    color: provider.transcriptText.isEmpty
                         ? Colors.white24
                         : Colors.white70,
                     fontSize: 14,
@@ -154,7 +155,7 @@ class CallScreen extends StatelessWidget {
           const SizedBox(height: 12),
           if (provider.translationText.isNotEmpty)
             TranslationBubble(
-              text: _getTranslation(provider),
+              text: provider.translationText,
             ).animate().slideY(begin: 0.2, duration: 300.ms),
           const Spacer(),
           if (provider.callState == CallState.active)
@@ -166,9 +167,11 @@ class CallScreen extends StatelessWidget {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.1),
+                  color: AppColors.accent.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.accent.withOpacity(0.4)),
+                  border: Border.all(
+                    color: AppColors.accent.withValues(alpha: 0.4),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -194,19 +197,6 @@ class CallScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _getTranslation(AppProvider provider) {
-    switch (provider.selectedLanguage) {
-      case Language.burmese:
-        return 'ကျွန်ုပ်သည် ဘဏ္ဍာရေးကြီးကြပ်မှုဝန်ကြီးဌာနမှ ဝန်ထမ်းတစ်ဦးဖြစ်ပါသည်။ သင်၏ အကောင့်သည် ရာဇဝတ်မှုနှင့် ဆက်နွှယ်နေပြီး ချက်ချင်း ငွေလွှဲရန် လိုအပ်ပါသည်။';
-      case Language.vietnamese:
-        return 'Tôi là nhân viên của Cơ quan Giám sát Tài chính. Tài khoản của bạn có liên quan đến tội phạm và cần chuyển tiền ngay lập tức.';
-      case Language.chinese:
-        return '我是金融监督院的工作人员。您的账户涉及犯罪，需要立即转账。';
-      default:
-        return 'I am an employee of the Financial Supervisory Service. Your account is involved in a crime and requires immediate transfer.';
-    }
   }
 
   Widget _buildCallControls(BuildContext context, AppProvider provider) {

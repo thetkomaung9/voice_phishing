@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../models/phishing_assessment.dart';
 import '../theme/app_colors.dart';
 
 class PhishingWarningOverlay extends StatelessWidget {
+  final PhishingAssessment assessment;
   final VoidCallback onDismiss;
   final VoidCallback onEndCall;
   const PhishingWarningOverlay({
     super.key,
+    required this.assessment,
     required this.onDismiss,
     required this.onEndCall,
   });
@@ -27,7 +30,7 @@ class PhishingWarningOverlay extends StatelessWidget {
                   border: Border.all(color: AppColors.danger, width: 2),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.danger.withOpacity(0.3),
+                      color: AppColors.danger.withValues(alpha: 0.3),
                       blurRadius: 40,
                       spreadRadius: 4,
                     ),
@@ -40,7 +43,7 @@ class PhishingWarningOverlay extends StatelessWidget {
                           width: 80,
                           height: 80,
                           decoration: BoxDecoration(
-                            color: AppColors.danger.withOpacity(0.15),
+                            color: AppColors.danger.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -57,7 +60,7 @@ class PhishingWarningOverlay extends StatelessWidget {
                         ),
                     const SizedBox(height: 20),
                     const Text(
-                      '⚠️ VOICE PHISHING DETECTED',
+                      'VOICE PHISHING ALERT',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: AppColors.danger,
@@ -67,10 +70,10 @@ class PhishingWarningOverlay extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'This call shows signs of financial fraud.\nDo NOT share personal or banking information.',
+                    Text(
+                      assessment.message,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 14,
                         height: 1.6,
@@ -80,26 +83,36 @@ class PhishingWarningOverlay extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.danger.withOpacity(0.1),
+                        color: AppColors.danger.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.info_outline_rounded,
                             color: AppColors.danger,
                             size: 16,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
-                            'Risk Score: 92%',
+                            'Risk Score: ${(assessment.score * 100).round()}%',
                             style: TextStyle(
                               color: AppColors.danger,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      assessment.reason,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 24),

@@ -1,10 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../services/native_channel_service.dart';
 import '../theme/app_colors.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  final NativeChannelService _native = NativeChannelService();
+  bool _overlayEnabled = false;
+  bool _callScreeningEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshIntegrationStatus();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _refreshIntegrationStatus();
+  }
+
+  Future<void> _refreshIntegrationStatus() async {
+    try {
+      final overlayEnabled = await _native.hasOverlayPermission();
+      final callScreeningEnabled = await _native.isCallScreeningEnabled();
+      if (!mounted) return;
+      setState(() {
+        _overlayEnabled = overlayEnabled;
+        _callScreeningEnabled = callScreeningEnabled;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _overlayEnabled = false;
+        _callScreeningEnabled = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +61,44 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          _SectionHeader(title: 'Phone Integration'),
+          _SettingsTile(
+            leading: const Icon(Icons.phone_in_talk_rounded, color: AppColors.primary),
+            title: 'Use Original Phone UI',
+            subtitle: 'Keep Samsung/Android call screen and add Safe-Call overlay',
+            trailing: _StatusPill(
+              label: _callScreeningEnabled ? 'Enabled' : 'Setup',
+              active: _callScreeningEnabled,
+            ),
+            onTap: () async {
+              await _native.openCallScreeningSettings();
+              await _refreshIntegrationStatus();
+            },
+          ),
+          _SettingsTile(
+            leading: const Icon(Icons.layers_rounded, color: AppColors.accent),
+            title: 'Overlay Permission',
+            subtitle: 'Allow translation and phishing warnings over incoming calls',
+            trailing: _StatusPill(
+              label: _overlayEnabled ? 'Allowed' : 'Grant',
+              active: _overlayEnabled,
+            ),
+            onTap: () async {
+              await _native.requestOverlayPermission();
+              await _refreshIntegrationStatus();
+            },
+          ),
+          _SettingsTile(
+            leading: const Icon(Icons.mic_rounded, color: AppColors.textSecondary),
+            title: 'Microphone Permission',
+            subtitle: 'Needed for live transcription during calls',
+            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white38),
+            onTap: () async {
+              await Permission.microphone.request();
+              await _refreshIntegrationStatus();
+            },
+          ),
+          const SizedBox(height: 24),
           _SectionHeader(title: 'Language'),
           ...Language.values.map((lang) {
             final labels = {
@@ -92,6 +171,35 @@ class _SectionHeader extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.w600,
           letterSpacing: 1,
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String label;
+  final bool active;
+
+  const _StatusPill({required this.label, required this.active});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: active ? AppColors.accent.withValues(alpha: 0.18) : Colors.white12,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: active ? AppColors.accent.withValues(alpha: 0.35) : Colors.white24,
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: active ? AppColors.accent : Colors.white70,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "649922110710",
+    "project_id": "safe-call-ai",
+    "storage_bucket": "safe-call-ai.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:649922110710:android:ba1eda5c047ee27c1278d7",
+        "android_client_info": {
+          "package_name": "com.safecall.ai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9hhEJQF57OJDJz2yx4gnSW9u5DYEBdeg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

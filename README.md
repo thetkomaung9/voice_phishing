@@ -77,6 +77,22 @@ flutter pub get
 flutter run
 ```
 
+To force a specific Firebase Realtime Database instance URL at runtime:
+
+```bash
+flutter run --dart-define=FIREBASE_DATABASE_URL=https://YOUR_DATABASE_URL
+```
+
+To enable Google Cloud Translation Basic (v2) from the Flutter app:
+
+```bash
+flutter run --dart-define=GOOGLE_CLOUD_TRANSLATE_API_KEY=YOUR_API_KEY
+```
+
+This project calls the public `translate/v2` REST endpoint directly from the
+client. Restrict that key to `translate.googleapis.com` and treat it as a
+development/prototype setup rather than a production-safe mobile architecture.
+
 ## Demo Flow
 
 1. Complete onboarding and select a language.
