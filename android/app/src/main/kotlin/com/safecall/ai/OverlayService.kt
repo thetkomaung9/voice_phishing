@@ -11,16 +11,16 @@ import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
+import androidx.core.content.ContextCompat
 import android.provider.Settings
 import android.speech.tts.TextToSpeech
-import androidx.core.content.ContextCompat
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
-import android.widget.TextView
 import android.widget.HorizontalScrollView
+import android.widget.TextView
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-// ── Event bus: OverlayService → Flutter EventChannel ──────────────────────
 object CallEventBus {
     val _events = MutableSharedFlow<Map<String, Any>>(extraBufferCapacity = 128)
     val events = _events.asSharedFlow()
@@ -97,7 +96,6 @@ class OverlayService : Service() {
         return START_NOT_STICKY
     }
 
-    // ── STT + Detection + Translation pipeline ────────────────────────────
     private fun startMonitoring() {
         fullTranscript.clear()
         sttManager.start(
@@ -146,9 +144,11 @@ class OverlayService : Service() {
         }
     }
 
-    // ── Overlay window ───────────────────────────────────────────────────
     private fun showOverlay() {
-        if (!Settings.canDrawOverlays(this)) return
+        if (!Settings.canDrawOverlays(this)) {
+            return
+        }
+
         removeOverlay()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         overlayView = LayoutInflater.from(this).inflate(R.layout.overlay_call_assistant, null)
@@ -170,18 +170,7 @@ class OverlayService : Service() {
             view.findViewById<Button>(R.id.btn112)?.setOnClickListener { dialEmergency("112") }
             view.findViewById<Button>(R.id.btn119)?.setOnClickListener { dialEmergency("119") }
             view.findViewById<Button>(R.id.btnDismiss)?.setOnClickListener { removeOverlay() }
-            view.findViewById<Button>(R.id.btnTextCallToggle)?.setOnClickListener {
-                toggleTextCallOverlay()
-            }
-            view.findViewById<Button>(R.id.btnReplyWho)?.setOnClickListener {
-                speakQuickReply("Who are you, and why are you calling?")
-            }
-            view.findViewById<Button>(R.id.btnReplyBusy)?.setOnClickListener {
-                speakQuickReply("I cannot talk right now. Please continue by text.")
-            }
-            view.findViewById<Button>(R.id.btnReplyText)?.setOnClickListener {
-                speakQuickReply("Please send me an official text message instead.")
-            }
+            bindTextCallActions(view)
             windowManager?.addView(view, params)
             updateTextCallUi()
         }
@@ -189,7 +178,10 @@ class OverlayService : Service() {
 
     private fun removeOverlay() {
         overlayView?.let {
-            try { windowManager?.removeView(it) } catch (_: Exception) {}
+            try {
+                windowManager?.removeView(it)
+            } catch (_: Exception) {
+            }
         }
         overlayView = null
     }
@@ -221,8 +213,24 @@ class OverlayService : Service() {
     private fun toggleTextCallOverlay() {
         textCallEnabled = !textCallEnabled
         updateTextCallUi()
+
         if (textCallEnabled) {
             speakQuickReply("Hello. I am using Safe-Call text call. Please speak slowly.")
+        }
+    }
+
+    private fun bindTextCallActions(view: View) {
+        view.findViewById<Button>(R.id.btnTextCallToggle)?.setOnClickListener {
+            toggleTextCallOverlay()
+        }
+        view.findViewById<Button>(R.id.btnReplyWho)?.setOnClickListener {
+            speakQuickReply("Who are you, and why are you calling?")
+        }
+        view.findViewById<Button>(R.id.btnReplyBusy)?.setOnClickListener {
+            speakQuickReply("I cannot talk right now. Please continue by text.")
+        }
+        view.findViewById<Button>(R.id.btnReplyText)?.setOnClickListener {
+            speakQuickReply("Please send me an official text message instead.")
         }
     }
 
@@ -235,13 +243,17 @@ class OverlayService : Service() {
             val toggle = overlayView?.findViewById<Button>(R.id.btnTextCallToggle)
 
             replies?.visibility = if (textCallEnabled) View.VISIBLE else View.GONE
-            status?.text = if (textCallEnabled) {
-                "Text Call active on top of the original phone UI"
-            } else {
-                "Use Safe-Call text replies without leaving the phone screen"
-            }
+            status?.text = textCallStatusText()
             toggle?.text = if (textCallEnabled) "Hide Text Call" else "Text Call"
         }
+    }
+
+    private fun textCallStatusText(): String {
+        return if (textCallEnabled) {
+            "Text Call active on top of the original phone UI"
+        }
+
+        "Use Safe-Call text replies without leaving the phone screen"
     }
 
     private fun initializeTextToSpeech() {
@@ -292,7 +304,6 @@ class OverlayService : Service() {
         super.onDestroy()
     }
 
-    // ── Foreground notification ──────────────────────────────────────────
     private fun buildNotification(): Notification {
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         if (manager.getNotificationChannel(CHANNEL_ID) == null) {
