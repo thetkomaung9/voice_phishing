@@ -8,7 +8,7 @@ import '../services/firebase_database_service.dart';
 import '../services/native_channel_service.dart';
 import '../services/realtime_phishing_analyzer.dart';
 
-enum CallState { idle, active, warning, ars }
+enum CallState { idle, active, warning, ars, textCall }
 
 enum Language { burmese, vietnamese, chinese, english }
 
@@ -103,6 +103,7 @@ class AppProvider extends ChangeNotifier {
   String _currentCaller = '';
   PhishingAssessment _assessment = const PhishingAssessment.safe();
   String _lastTextCallMessage = '';
+  TextCallSpeaker? _lastTextCallSpeaker;
 
   bool get protectionEnabled => _protectionEnabled;
   Language get selectedLanguage => _selectedLanguage;
@@ -166,6 +167,7 @@ class AppProvider extends ChangeNotifier {
     _assessment = const PhishingAssessment.safe();
     _textCallMessages.clear();
     _lastTextCallMessage = '';
+    _lastTextCallSpeaker = null;
     notifyListeners();
 
     // Start native monitoring only when mic permission is granted
@@ -288,6 +290,7 @@ class AppProvider extends ChangeNotifier {
     _assessment = const PhishingAssessment.safe();
     _textCallMessages.clear();
     _lastTextCallMessage = '';
+    _lastTextCallSpeaker = null;
     notifyListeners();
 
     // Stop native monitoring
@@ -392,11 +395,15 @@ class AppProvider extends ChangeNotifier {
     required String text,
   }) {
     final trimmed = text.trim();
-    if (trimmed.isEmpty || _lastTextCallMessage == trimmed) {
+    if (
+      trimmed.isEmpty ||
+      (_lastTextCallMessage == trimmed && _lastTextCallSpeaker == speaker)
+    ) {
       return;
     }
 
     _lastTextCallMessage = trimmed;
+    _lastTextCallSpeaker = speaker;
     _textCallMessages.add(
       TextCallMessage(
         id: DateTime.now().microsecondsSinceEpoch.toString(),
