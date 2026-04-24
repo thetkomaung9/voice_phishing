@@ -251,9 +251,9 @@ class OverlayService : Service() {
     private fun textCallStatusText(): String {
         return if (textCallEnabled) {
             "Text Call active on top of the original phone UI"
+        } else {
+            "Use Safe-Call text replies without leaving the phone screen"
         }
-
-        "Use Safe-Call text replies without leaving the phone screen"
     }
 
     private fun initializeTextToSpeech() {
