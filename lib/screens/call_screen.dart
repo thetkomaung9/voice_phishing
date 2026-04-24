@@ -5,6 +5,7 @@ import '../providers/app_provider.dart';
 import '../theme/app_colors.dart';
 import '../widgets/phishing_warning_overlay.dart';
 import '../widgets/ars_menu_widget.dart';
+import '../widgets/text_call_panel.dart';
 import '../widgets/translation_bubble.dart';
 import '../widgets/risk_meter.dart';
 
@@ -27,9 +28,11 @@ class CallScreen extends StatelessWidget {
                 RiskMeter(score: provider.riskScore),
                 const SizedBox(height: 16),
                 Expanded(
-                  child: provider.callState == CallState.ars
-                      ? const ARSMenuWidget()
-                      : _buildTranslationArea(provider),
+                  child: switch (provider.callState) {
+                    CallState.ars => const ARSMenuWidget(),
+                    CallState.textCall => const TextCallPanel(),
+                    _ => _buildTranslationArea(provider),
+                  },
                 ),
                 _buildCallControls(context, provider),
               ],
@@ -159,39 +162,80 @@ class CallScreen extends StatelessWidget {
             ).animate().slideY(begin: 0.2, duration: 300.ms),
           const Spacer(),
           if (provider.callState == CallState.active)
-            GestureDetector(
-              onTap: () => provider.switchToARS(),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.accent.withValues(alpha: 0.4),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.dialpad_rounded,
-                      color: AppColors.accent,
-                      size: 18,
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: () => provider.switchToTextCall(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
                     ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Switch to Visual ARS',
-                      style: TextStyle(
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.w600,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.45),
                       ),
                     ),
-                  ],
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.chat_bubble_rounded,
+                          color: AppColors.primary,
+                          size: 18,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Start Text Call',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                GestureDetector(
+                  onTap: () => provider.switchToARS(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.accent.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.dialpad_rounded,
+                          color: AppColors.accent,
+                          size: 18,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Switch to Visual ARS',
+                          style: TextStyle(
+                            color: AppColors.accent,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           const SizedBox(height: 16),
         ],
@@ -206,10 +250,12 @@ class CallScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _ControlButton(
-            icon: Icons.mic_off_rounded,
-            label: 'Mute',
+            icon: provider.isTextCallActive
+                ? Icons.keyboard_alt_rounded
+                : Icons.mic_off_rounded,
+            label: provider.isTextCallActive ? 'Text' : 'Mute',
             color: Colors.white24,
-            onTap: () {},
+            onTap: () => provider.switchToTextCall(),
           ),
           _ControlButton(
             icon: Icons.volume_up_rounded,
