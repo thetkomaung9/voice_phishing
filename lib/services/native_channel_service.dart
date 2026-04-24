@@ -62,4 +62,15 @@ class NativeChannelService {
 
   Future<bool> isCallScreeningEnabled() async =>
       await _method.invokeMethod<bool>('isCallScreeningEnabled') ?? false;
+
+  Future<void> speakTextCallMessage(
+    String text, {
+    required String languageCode,
+  }) => _method.invokeMethod('speakTextCallMessage', {
+    'text': text,
+    'languageCode': languageCode,
+  });
+
+  Future<void> stopTextCallSpeaker() =>
+      _method.invokeMethod('stopTextCallSpeaker');
 }
