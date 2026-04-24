@@ -12,8 +12,6 @@ enum CallState { idle, active, warning, ars, textCall }
 
 enum Language { burmese, vietnamese, chinese, english }
 
-enum CallMode { voice, ars, textCall }
-
 enum TextCallSpeaker { assistant, caller, user }
 
 class CallLog {
@@ -94,7 +92,6 @@ class AppProvider extends ChangeNotifier {
   bool _protectionEnabled = true;
   Language _selectedLanguage = Language.burmese;
   CallState _callState = CallState.idle;
-  CallMode _callMode = CallMode.voice;
   double _riskScore = 0.0;
   String _translationText = '';
   String _transcriptText = '';
@@ -108,7 +105,7 @@ class AppProvider extends ChangeNotifier {
   bool get protectionEnabled => _protectionEnabled;
   Language get selectedLanguage => _selectedLanguage;
   CallState get callState => _callState;
-  bool get isTextCallActive => _callMode == CallMode.textCall;
+  bool get isTextCallActive => _callState == CallState.textCall;
   double get riskScore => _riskScore;
   String get translationText => _translationText;
   String get transcriptText => _transcriptText;
@@ -158,8 +155,7 @@ class AppProvider extends ChangeNotifier {
     _clearDemoTimers();
     _translationRequestId++;
     _currentCaller = caller;
-    _callMode = CallMode.voice;
-    _callState = _stateForCurrentMode;
+    _callState = CallState.active;
     _riskScore = 0.0;
     _isWarning = false;
     _translationText = '';
@@ -170,7 +166,6 @@ class AppProvider extends ChangeNotifier {
     _lastTextCallSpeaker = null;
     notifyListeners();
 
-    // Start native monitoring only when mic permission is granted
     _native.startMonitoring(caller).catchError((_) {});
     final micGranted = await Permission.microphone.isGranted;
     if (micGranted) {
@@ -189,14 +184,15 @@ class AppProvider extends ChangeNotifier {
     _translationText = translatedText ?? transcript;
     _assessment = _analyzer.analyze(transcript);
     _riskScore = _assessment.score;
+
     if (_assessment.riskLevel >= 2) {
       _isWarning = true;
       _callState = CallState.warning;
-    } else {
-      _callState = _stateForCurrentMode;
+    } else if (_callState != CallState.ars && _callState != CallState.textCall) {
+      _callState = CallState.active;
     }
 
-    if (_callMode == CallMode.textCall) {
+    if (_callState == CallState.textCall) {
       _appendTextCallMessage(
         speaker: TextCallSpeaker.caller,
         text: translatedText ?? transcript,
@@ -221,33 +217,33 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void switchToARS() {
-    _callMode = CallMode.ars;
+  void switchToArs() {
     _callState = CallState.ars;
     notifyListeners();
   }
 
   void switchToTextCall() {
-    if (_callMode != CallMode.textCall) {
-      _callMode = CallMode.textCall;
-      _appendTextCallMessage(
-        speaker: TextCallSpeaker.assistant,
-        text:
-            'Text Call mode is on. Type a reply and Safe-Call will speak it to the caller.',
-      );
-      if (_translationText.isNotEmpty) {
-        _appendTextCallMessage(
-          speaker: TextCallSpeaker.caller,
-          text: _translationText,
-        );
-      } else if (_transcriptText.isNotEmpty) {
-        _appendTextCallMessage(
-          speaker: TextCallSpeaker.caller,
-          text: _transcriptText,
-        );
-      }
+    if (_callState == CallState.textCall) {
+      return;
     }
+
     _callState = CallState.textCall;
+    _appendTextCallMessage(
+      speaker: TextCallSpeaker.assistant,
+      text:
+          'Text Call is on. Type a reply and Safe-Call will read it to the caller.',
+    );
+
+    final latestCallerText = _translationText.isNotEmpty
+        ? _translationText
+        : _transcriptText;
+    if (latestCallerText.isNotEmpty) {
+      _appendTextCallMessage(
+        speaker: TextCallSpeaker.caller,
+        text: latestCallerText,
+      );
+    }
+
     notifyListeners();
   }
 
@@ -280,7 +276,6 @@ class AppProvider extends ChangeNotifier {
     );
     _callLogs.insert(0, callLog);
     _callState = CallState.idle;
-    _callMode = CallMode.voice;
     _translationRequestId++;
     _isWarning = false;
     _riskScore = 0.0;
@@ -293,7 +288,6 @@ class AppProvider extends ChangeNotifier {
     _lastTextCallSpeaker = null;
     notifyListeners();
 
-    // Stop native monitoring
     _nativeSub?.cancel();
     _nativeSub = null;
     _native.stopMonitoring();
@@ -309,7 +303,11 @@ class AppProvider extends ChangeNotifier {
   void dismissWarning() {
     _isWarning = false;
     if (_currentCaller.isNotEmpty) {
-      _callState = _stateForCurrentMode;
+      if (_textCallMessages.isNotEmpty) {
+        _callState = CallState.textCall;
+      } else {
+        _callState = CallState.active;
+      }
     }
     notifyListeners();
   }
@@ -377,17 +375,6 @@ class AppProvider extends ChangeNotifier {
       timer.cancel();
     }
     _demoTimers.clear();
-  }
-
-  CallState get _stateForCurrentMode {
-    switch (_callMode) {
-      case CallMode.voice:
-        return CallState.active;
-      case CallMode.ars:
-        return CallState.ars;
-      case CallMode.textCall:
-        return CallState.textCall;
-    }
   }
 
   void _appendTextCallMessage({
