@@ -73,6 +73,82 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
+    <LinearLayout
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:id="@+id/btnTextCallToggle"
+            android:text="Text Call"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#1565C0"
+            android:textSize="12sp"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp" />
+
+        <TextView
+            android:id="@+id/tvTextCallStatus"
+            android:text="Use Safe-Call text replies without leaving the phone screen"
+            android:textColor="#B3FFFFFF"
+            android:textSize="11sp"
+            android:layout_marginStart="10dp"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <HorizontalScrollView
+        android:id="@+id/textCallRepliesContainer"
+        android:visibility="gone"
+        android:layout_marginTop="8dp"
+        android:scrollbars="none"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <Button
+                android:id="@+id/btnReplyWho"
+                android:text="Who are you?"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#263238"
+                android:textSize="12sp"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp" />
+
+            <Button
+                android:id="@+id/btnReplyBusy"
+                android:text="I can't talk now"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#263238"
+                android:textSize="12sp"
+                android:layout_marginStart="8dp"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp" />
+
+            <Button
+                android:id="@+id/btnReplyText"
+                android:text="Send me a text"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#263238"
+                android:textSize="12sp"
+                android:layout_marginStart="8dp"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
     <!-- ── Emergency Buttons ───────────────────────────────────── -->
     <LinearLayout
         android:orientation="horizontal"

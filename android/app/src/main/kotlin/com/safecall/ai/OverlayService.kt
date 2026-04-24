@@ -12,6 +12,7 @@ import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
 import android.provider.Settings
+import android.speech.tts.TextToSpeech
 import androidx.core.content.ContextCompat
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -19,6 +20,7 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
+import android.widget.HorizontalScrollView
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +30,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 // ── Event bus: OverlayService → Flutter EventChannel ──────────────────────
 object CallEventBus {
@@ -53,12 +56,17 @@ class OverlayService : Service() {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var phoneNumber = "Unknown"
     private val fullTranscript = StringBuilder()
+    private var textCallEnabled = false
+    private var textToSpeech: TextToSpeech? = null
+    private var ttsReady = false
+    private var pendingSpokenReply: String? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
         sttManager = SpeechRecognitionManager(this)
+        initializeTextToSpeech()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -162,7 +170,20 @@ class OverlayService : Service() {
             view.findViewById<Button>(R.id.btn112)?.setOnClickListener { dialEmergency("112") }
             view.findViewById<Button>(R.id.btn119)?.setOnClickListener { dialEmergency("119") }
             view.findViewById<Button>(R.id.btnDismiss)?.setOnClickListener { removeOverlay() }
+            view.findViewById<Button>(R.id.btnTextCallToggle)?.setOnClickListener {
+                toggleTextCallOverlay()
+            }
+            view.findViewById<Button>(R.id.btnReplyWho)?.setOnClickListener {
+                speakQuickReply("Who are you, and why are you calling?")
+            }
+            view.findViewById<Button>(R.id.btnReplyBusy)?.setOnClickListener {
+                speakQuickReply("I cannot talk right now. Please continue by text.")
+            }
+            view.findViewById<Button>(R.id.btnReplyText)?.setOnClickListener {
+                speakQuickReply("Please send me an official text message instead.")
+            }
             windowManager?.addView(view, params)
+            updateTextCallUi()
         }
     }
 
@@ -197,6 +218,58 @@ class OverlayService : Service() {
         }
     }
 
+    private fun toggleTextCallOverlay() {
+        textCallEnabled = !textCallEnabled
+        updateTextCallUi()
+        if (textCallEnabled) {
+            speakQuickReply("Hello. I am using Safe-Call text call. Please speak slowly.")
+        }
+    }
+
+    private fun updateTextCallUi() {
+        overlayView?.post {
+            val replies = overlayView?.findViewById<HorizontalScrollView>(
+                R.id.textCallRepliesContainer
+            )
+            val status = overlayView?.findViewById<TextView>(R.id.tvTextCallStatus)
+            val toggle = overlayView?.findViewById<Button>(R.id.btnTextCallToggle)
+
+            replies?.visibility = if (textCallEnabled) View.VISIBLE else View.GONE
+            status?.text = if (textCallEnabled) {
+                "Text Call active on top of the original phone UI"
+            } else {
+                "Use Safe-Call text replies without leaving the phone screen"
+            }
+            toggle?.text = if (textCallEnabled) "Hide Text Call" else "Text Call"
+        }
+    }
+
+    private fun initializeTextToSpeech() {
+        textToSpeech = TextToSpeech(applicationContext) { status ->
+            ttsReady = status == TextToSpeech.SUCCESS
+            if (ttsReady) {
+                val locale = Locale.forLanguageTag(AppSettings.getTargetLanguage(this))
+                val availability = textToSpeech?.setLanguage(locale)
+                if (availability == TextToSpeech.LANG_MISSING_DATA ||
+                    availability == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    textToSpeech?.setLanguage(Locale.ENGLISH)
+                }
+                pendingSpokenReply?.let(::speakQuickReply)
+                pendingSpokenReply = null
+            }
+        }
+    }
+
+    private fun speakQuickReply(message: String) {
+        val tts = textToSpeech
+        if (!ttsReady || tts == null) {
+            pendingSpokenReply = message
+            return
+        }
+
+        tts.speak(message, TextToSpeech.QUEUE_FLUSH, null, "overlay_text_call_reply")
+    }
+
     private fun dialEmergency(number: String) {
         val dialIntent = Intent(Intent.ACTION_DIAL).apply {
             data = android.net.Uri.parse("tel:$number")
@@ -208,11 +281,13 @@ class OverlayService : Service() {
     private fun cleanup() {
         sttManager.stop()
         translationManager?.close()
+        textToSpeech?.stop()
         removeOverlay()
     }
 
     override fun onDestroy() {
         cleanup()
+        textToSpeech?.shutdown()
         scope.cancel()
         super.onDestroy()
     }
