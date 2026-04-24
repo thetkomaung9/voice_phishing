@@ -300,9 +300,9 @@ class AppProvider extends ChangeNotifier {
     _native.stopTextCallSpeaker().catchError((_) {});
 
     unawaited(
-      _database.saveCallLog(id: callLog.id, data: callLog.toJson()).catchError((
-        _,
-      ) {}),
+      _database
+          .saveCallLog(id: callLog.id, data: callLog.toJson())
+          .catchError((_) {}),
     );
   }
 
@@ -395,10 +395,8 @@ class AppProvider extends ChangeNotifier {
     required String text,
   }) {
     final trimmed = text.trim();
-    if (
-      trimmed.isEmpty ||
-      (_lastTextCallMessage == trimmed && _lastTextCallSpeaker == speaker)
-    ) {
+    if (trimmed.isEmpty ||
+        (_lastTextCallMessage == trimmed && _lastTextCallSpeaker == speaker)) {
       return;
     }
 

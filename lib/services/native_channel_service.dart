@@ -49,10 +49,8 @@ class NativeChannelService {
   Future<bool> getProtectionEnabled() async =>
       await _method.invokeMethod<bool>('getProtectionEnabled') ?? true;
 
-  Future<void> setPreferredLanguage(String languageCode) =>
-      _method.invokeMethod('setPreferredLanguage', {
-        'languageCode': languageCode,
-      });
+  Future<void> setPreferredLanguage(String languageCode) => _method
+      .invokeMethod('setPreferredLanguage', {'languageCode': languageCode});
 
   Future<String> getPreferredLanguage() async =>
       await _method.invokeMethod<String>('getPreferredLanguage') ?? 'en';
