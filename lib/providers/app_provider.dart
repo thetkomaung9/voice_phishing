@@ -12,6 +12,10 @@ enum CallState { idle, active, warning, ars }
 
 enum Language { burmese, vietnamese, chinese, english }
 
+enum CallMode { voice, ars, textCall }
+
+enum TextCallSpeaker { assistant, caller, user }
+
 class CallLog {
   final String id;
   final String callerNumber;
@@ -56,6 +60,20 @@ class CallLog {
   }
 }
 
+class TextCallMessage {
+  final String id;
+  final TextCallSpeaker speaker;
+  final String text;
+  final DateTime timestamp;
+
+  const TextCallMessage({
+    required this.id,
+    required this.speaker,
+    required this.text,
+    required this.timestamp,
+  });
+}
+
 class AppProvider extends ChangeNotifier {
   final RealtimePhishingAnalyzer _analyzer = const RealtimePhishingAnalyzer();
   final CloudTranslationService _translation = CloudTranslationService();
@@ -64,10 +82,19 @@ class AppProvider extends ChangeNotifier {
   StreamSubscription<CallEvent>? _nativeSub;
   StreamSubscription<List<Map<String, dynamic>>>? _callLogsSub;
   final List<Timer> _demoTimers = [];
+  final List<TextCallMessage> _textCallMessages = [];
+  final List<String> _quickTextCallReplies = const [
+    'Please tell me why you are calling.',
+    'Please wait. I am reading this by text.',
+    'I do not share OTP or bank account numbers.',
+    'Please send an official text message instead.',
+    'I will hang up and call the company back directly.',
+  ];
   int _translationRequestId = 0;
   bool _protectionEnabled = true;
   Language _selectedLanguage = Language.burmese;
   CallState _callState = CallState.idle;
+  CallMode _callMode = CallMode.voice;
   double _riskScore = 0.0;
   String _translationText = '';
   String _transcriptText = '';
@@ -75,10 +102,12 @@ class AppProvider extends ChangeNotifier {
   final List<CallLog> _callLogs = [];
   String _currentCaller = '';
   PhishingAssessment _assessment = const PhishingAssessment.safe();
+  String _lastTextCallMessage = '';
 
   bool get protectionEnabled => _protectionEnabled;
   Language get selectedLanguage => _selectedLanguage;
   CallState get callState => _callState;
+  bool get isTextCallActive => _callMode == CallMode.textCall;
   double get riskScore => _riskScore;
   String get translationText => _translationText;
   String get transcriptText => _transcriptText;
@@ -86,6 +115,8 @@ class AppProvider extends ChangeNotifier {
   List<CallLog> get callLogs => _callLogs;
   String get currentCaller => _currentCaller;
   PhishingAssessment get assessment => _assessment;
+  List<TextCallMessage> get textCallMessages => _textCallMessages;
+  List<String> get quickTextCallReplies => _quickTextCallReplies;
 
   AppProvider() {
     unawaited(_loadNativeSettings());
@@ -126,12 +157,15 @@ class AppProvider extends ChangeNotifier {
     _clearDemoTimers();
     _translationRequestId++;
     _currentCaller = caller;
-    _callState = CallState.active;
+    _callMode = CallMode.voice;
+    _callState = _stateForCurrentMode;
     _riskScore = 0.0;
     _isWarning = false;
     _translationText = '';
     _transcriptText = '';
     _assessment = const PhishingAssessment.safe();
+    _textCallMessages.clear();
+    _lastTextCallMessage = '';
     notifyListeners();
 
     // Start native monitoring only when mic permission is granted
@@ -156,8 +190,15 @@ class AppProvider extends ChangeNotifier {
     if (_assessment.riskLevel >= 2) {
       _isWarning = true;
       _callState = CallState.warning;
-    } else if (_callState != CallState.ars) {
-      _callState = CallState.active;
+    } else {
+      _callState = _stateForCurrentMode;
+    }
+
+    if (_callMode == CallMode.textCall) {
+      _appendTextCallMessage(
+        speaker: TextCallSpeaker.caller,
+        text: translatedText ?? transcript,
+      );
     }
     notifyListeners();
 
@@ -179,8 +220,50 @@ class AppProvider extends ChangeNotifier {
   }
 
   void switchToARS() {
+    _callMode = CallMode.ars;
     _callState = CallState.ars;
     notifyListeners();
+  }
+
+  void switchToTextCall() {
+    if (_callMode != CallMode.textCall) {
+      _callMode = CallMode.textCall;
+      _appendTextCallMessage(
+        speaker: TextCallSpeaker.assistant,
+        text:
+            'Text Call mode is on. Type a reply and Safe-Call will speak it to the caller.',
+      );
+      if (_translationText.isNotEmpty) {
+        _appendTextCallMessage(
+          speaker: TextCallSpeaker.caller,
+          text: _translationText,
+        );
+      } else if (_transcriptText.isNotEmpty) {
+        _appendTextCallMessage(
+          speaker: TextCallSpeaker.caller,
+          text: _transcriptText,
+        );
+      }
+    }
+    _callState = CallState.textCall;
+    notifyListeners();
+  }
+
+  Future<void> sendTextCallMessage(String text) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) {
+      return;
+    }
+
+    _appendTextCallMessage(speaker: TextCallSpeaker.user, text: trimmed);
+    notifyListeners();
+
+    try {
+      await _native.speakTextCallMessage(
+        trimmed,
+        languageCode: _selectedLanguage.nativeLanguageCode,
+      );
+    } catch (_) {}
   }
 
   void endCall() {
@@ -195,6 +278,7 @@ class AppProvider extends ChangeNotifier {
     );
     _callLogs.insert(0, callLog);
     _callState = CallState.idle;
+    _callMode = CallMode.voice;
     _translationRequestId++;
     _isWarning = false;
     _riskScore = 0.0;
@@ -202,12 +286,15 @@ class AppProvider extends ChangeNotifier {
     _transcriptText = '';
     _currentCaller = '';
     _assessment = const PhishingAssessment.safe();
+    _textCallMessages.clear();
+    _lastTextCallMessage = '';
     notifyListeners();
 
     // Stop native monitoring
     _nativeSub?.cancel();
     _nativeSub = null;
     _native.stopMonitoring();
+    _native.stopTextCallSpeaker().catchError((_) {});
 
     unawaited(
       _database.saveCallLog(id: callLog.id, data: callLog.toJson()).catchError((
@@ -219,7 +306,7 @@ class AppProvider extends ChangeNotifier {
   void dismissWarning() {
     _isWarning = false;
     if (_currentCaller.isNotEmpty) {
-      _callState = CallState.active;
+      _callState = _stateForCurrentMode;
     }
     notifyListeners();
   }
@@ -287,6 +374,37 @@ class AppProvider extends ChangeNotifier {
       timer.cancel();
     }
     _demoTimers.clear();
+  }
+
+  CallState get _stateForCurrentMode {
+    switch (_callMode) {
+      case CallMode.voice:
+        return CallState.active;
+      case CallMode.ars:
+        return CallState.ars;
+      case CallMode.textCall:
+        return CallState.textCall;
+    }
+  }
+
+  void _appendTextCallMessage({
+    required TextCallSpeaker speaker,
+    required String text,
+  }) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty || _lastTextCallMessage == trimmed) {
+      return;
+    }
+
+    _lastTextCallMessage = trimmed;
+    _textCallMessages.add(
+      TextCallMessage(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        speaker: speaker,
+        text: trimmed,
+        timestamp: DateTime.now(),
+      ),
+    );
   }
 
   @override
