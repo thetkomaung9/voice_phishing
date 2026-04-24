@@ -5,6 +5,8 @@ import android.net.Uri
 import android.app.role.RoleManager
 import android.os.Build
 import android.provider.Settings
+import android.speech.tts.TextToSpeech
+import java.util.Locale
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
@@ -26,6 +28,9 @@ class MainActivity : FlutterActivity() {
     }
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private var textToSpeech: TextToSpeech? = null
+    private var isTextToSpeechReady = false
+    private var pendingTextCallSpeech: Pair<String, String>? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -84,6 +89,16 @@ class MainActivity : FlutterActivity() {
                     "isCallScreeningEnabled" -> {
                         result.success(isCallScreeningEnabled())
                     }
+                    "speakTextCallMessage" -> {
+                        val text = call.argument<String>("text").orEmpty()
+                        val languageCode = call.argument<String>("languageCode") ?: "en"
+                        speakTextCallMessage(text, languageCode)
+                        result.success(null)
+                    }
+                    "stopTextCallSpeaker" -> {
+                        textToSpeech?.stop()
+                        result.success(null)
+                    }
                     else -> result.notImplemented()
                 }
             }
@@ -107,6 +122,8 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        textToSpeech?.stop()
+        textToSpeech?.shutdown()
         scope.cancel()
         super.onDestroy()
     }
@@ -129,5 +146,42 @@ class MainActivity : FlutterActivity() {
 
         val roleManager = getSystemService(RoleManager::class.java) ?: return false
         return roleManager.isRoleHeld(RoleManager.ROLE_CALL_SCREENING)
+    }
+
+    private fun speakTextCallMessage(text: String, languageCode: String) {
+        if (text.isBlank()) {
+            return
+        }
+
+        if (textToSpeech == null) {
+            pendingTextCallSpeech = text to languageCode
+            textToSpeech = TextToSpeech(applicationContext) { status ->
+                isTextToSpeechReady = status == TextToSpeech.SUCCESS
+                val pending = pendingTextCallSpeech ?: return@TextToSpeech
+                if (isTextToSpeechReady) {
+                    playTextCallMessage(pending.first, pending.second)
+                }
+                pendingTextCallSpeech = null
+            }
+            return
+        }
+
+        if (!isTextToSpeechReady) {
+            pendingTextCallSpeech = text to languageCode
+            return
+        }
+
+        playTextCallMessage(text, languageCode)
+    }
+
+    private fun playTextCallMessage(text: String, languageCode: String) {
+        val tts = textToSpeech ?: return
+        val locale = Locale.forLanguageTag(languageCode.replace('_', '-'))
+        val availability = tts.setLanguage(locale)
+        if (availability == TextToSpeech.LANG_MISSING_DATA ||
+            availability == TextToSpeech.LANG_NOT_SUPPORTED) {
+            tts.setLanguage(Locale.ENGLISH)
+        }
+        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "safe_call_text_call")
     }
 }
