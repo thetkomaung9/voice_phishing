@@ -29,6 +29,7 @@ class _TextCallPanelState extends State<TextCallPanel> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
+    final messages = provider.textCallMessages;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -78,12 +79,14 @@ class _TextCallPanelState extends State<TextCallPanel> {
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
-                itemCount: provider.textCallMessages.length,
+                itemCount: messages.length,
                 itemBuilder: (context, index) {
-                  final message = provider.textCallMessages[index];
+                  final message = messages[index];
                   final isUser = message.speaker == TextCallSpeaker.user;
-                  final isAssistant =
-                      message.speaker == TextCallSpeaker.assistant;
+                  final bubbleColor = _bubbleColor(message.speaker);
+                  final borderColor = isUser
+                      ? AppColors.primary.withValues(alpha: 0.8)
+                      : Colors.white10;
 
                   return Align(
                     alignment: isUser
@@ -94,17 +97,9 @@ class _TextCallPanelState extends State<TextCallPanel> {
                       constraints: const BoxConstraints(maxWidth: 280),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isUser
-                            ? AppColors.primary
-                            : isAssistant
-                            ? const Color(0xFF202938)
-                            : AppColors.card,
+                        color: bubbleColor,
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: isUser
-                              ? AppColors.primary.withValues(alpha: 0.8)
-                              : Colors.white10,
-                        ),
+                        border: Border.all(color: borderColor),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,6 +227,17 @@ class _TextCallPanelState extends State<TextCallPanel> {
         return 'Caller';
       case TextCallSpeaker.user:
         return 'You';
+    }
+  }
+
+  Color _bubbleColor(TextCallSpeaker speaker) {
+    switch (speaker) {
+      case TextCallSpeaker.user:
+        return AppColors.primary;
+      case TextCallSpeaker.assistant:
+        return const Color(0xFF202938);
+      case TextCallSpeaker.caller:
+        return AppColors.card;
     }
   }
 }

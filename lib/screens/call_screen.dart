@@ -15,6 +15,7 @@ class CallScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
+    final activeBody = _buildActiveBody(provider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -27,13 +28,7 @@ class CallScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 RiskMeter(score: provider.riskScore),
                 const SizedBox(height: 16),
-                Expanded(
-                  child: switch (provider.callState) {
-                    CallState.ars => const ARSMenuWidget(),
-                    CallState.textCall => const TextCallPanel(),
-                    _ => _buildTranslationArea(provider),
-                  },
-                ),
+                Expanded(child: activeBody),
                 _buildCallControls(context, provider),
               ],
             ),
@@ -50,6 +45,18 @@ class CallScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildActiveBody(AppProvider provider) {
+    if (provider.callState == CallState.ars) {
+      return const ARSMenuWidget();
+    }
+
+    if (provider.callState == CallState.textCall) {
+      return const TextCallPanel();
+    }
+
+    return _buildTranslationArea(provider);
   }
 
   Widget _buildCallHeader(BuildContext context, AppProvider provider) {
@@ -202,7 +209,7 @@ class CallScreen extends StatelessWidget {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () => provider.switchToARS(),
+                  onTap: () => provider.switchToArs(),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,

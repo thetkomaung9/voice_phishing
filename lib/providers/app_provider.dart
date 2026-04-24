@@ -99,6 +99,7 @@ class AppProvider extends ChangeNotifier {
   final List<CallLog> _callLogs = [];
   String _currentCaller = '';
   PhishingAssessment _assessment = const PhishingAssessment.safe();
+  CallState _stateBeforeWarning = CallState.active;
   String _lastTextCallMessage = '';
   TextCallSpeaker? _lastTextCallSpeaker;
 
@@ -187,6 +188,9 @@ class AppProvider extends ChangeNotifier {
 
     if (_assessment.riskLevel >= 2) {
       _isWarning = true;
+      if (_callState != CallState.warning) {
+        _stateBeforeWarning = _callState;
+      }
       _callState = CallState.warning;
     } else if (_callState != CallState.ars && _callState != CallState.textCall) {
       _callState = CallState.active;
@@ -303,11 +307,7 @@ class AppProvider extends ChangeNotifier {
   void dismissWarning() {
     _isWarning = false;
     if (_currentCaller.isNotEmpty) {
-      if (_textCallMessages.isNotEmpty) {
-        _callState = CallState.textCall;
-      } else {
-        _callState = CallState.active;
-      }
+      _callState = _stateBeforeWarning;
     }
     notifyListeners();
   }
