@@ -45,6 +45,11 @@ class OverlayService : Service() {
         const val EXTRA_PHONE_NUMBER = "phone_number"
         private const val CHANNEL_ID = "safecall_monitor"
         private const val NOTIFICATION_ID = 1001
+        private var activeService: OverlayService? = null
+
+        fun processExternalTranscript(text: String) {
+            activeService?.processRecognizedText(text, source = "screen")
+        }
     }
 
     private var windowManager: WindowManager? = null
@@ -64,6 +69,7 @@ class OverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        activeService = this
         sttManager = SpeechRecognitionManager(this)
         initializeTextToSpeech()
     }
@@ -106,20 +112,26 @@ class OverlayService : Service() {
                 emitEvent(partial, result)
             },
             onFinal = { final ->
-                if (final.isNotBlank()) {
-                    fullTranscript.append(" ").append(final)
-                    val result = detector.analyze(fullTranscript.toString())
-                    updateOverlayRisk(result)
-                    translationManager?.translate(final) { englishTranslation ->
-                        updateOverlayEnglishTranslation(englishTranslation)
-                        emitEvent(final, result, englishTranslation = englishTranslation)
-                    } ?: emitEvent(final, result)
-                    translationManager?.translatePreferred(final) { preferredTranslation ->
-                        updateOverlayPreferredTranslation(preferredTranslation)
-                    }
-                }
+                processRecognizedText(final, source = "microphone")
             }
         )
+    }
+
+    private fun processRecognizedText(text: String, source: String) {
+        val final = text.trim()
+        if (final.isBlank()) return
+
+        fullTranscript.append(" ").append(final)
+        updateOverlayTranscript(final)
+        val result = detector.analyze(fullTranscript.toString())
+        updateOverlayRisk(result)
+        translationManager?.translate(final) { englishTranslation ->
+            updateOverlayEnglishTranslation(englishTranslation)
+            emitEvent(final, result, englishTranslation = englishTranslation, source = source)
+        } ?: emitEvent(final, result, source = source)
+        translationManager?.translatePreferred(final) { preferredTranslation ->
+            updateOverlayPreferredTranslation(preferredTranslation)
+        }
     }
 
     private fun ensureTranslator() {
@@ -132,12 +144,14 @@ class OverlayService : Service() {
         transcript: String,
         result: PhishingResult,
         englishTranslation: String = "",
-        myanmarTranslation: String = ""
+        myanmarTranslation: String = "",
+        source: String = "microphone"
     ) {
         scope.launch {
             CallEventBus._events.emit(
                 mapOf(
                     "type" to "update",
+                    "source" to source,
                     "transcript" to transcript,
                     "english_translation" to englishTranslation,
                     "myanmar_translation" to myanmarTranslation,
@@ -316,6 +330,9 @@ class OverlayService : Service() {
     override fun onDestroy() {
         cleanup()
         textToSpeech?.shutdown()
+        if (activeService == this) {
+            activeService = null
+        }
         scope.cancel()
         super.onDestroy()
     }
