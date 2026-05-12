@@ -202,6 +202,8 @@ class AppProvider extends ChangeNotifier {
     _transcriptText = transcript;
     if (englishTranslation?.trim().isNotEmpty ?? false) {
       _englishTranslationText = englishTranslation!.trim();
+    } else if (translatedText?.trim().isNotEmpty ?? false) {
+      _englishTranslationText = translatedText!.trim();
     }
     if (myanmarTranslation?.trim().isNotEmpty ?? false) {
       _myanmarTranslationText = myanmarTranslation!.trim();
@@ -278,6 +280,9 @@ class AppProvider extends ChangeNotifier {
     }
     if (selected?.trim().isNotEmpty ?? false) {
       _translationText = selected!.trim();
+      if (_selectedLanguage == Language.english) {
+        _englishTranslationText = _translationText;
+      }
     } else {
       _translationText = _translationForSelectedLanguage(fallback: transcript);
     }

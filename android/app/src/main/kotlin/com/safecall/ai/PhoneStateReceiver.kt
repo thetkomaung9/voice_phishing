@@ -22,6 +22,13 @@ class PhoneStateReceiver : BroadcastReceiver() {
                 }
                 ContextCompat.startForegroundService(context, serviceIntent)
             }
+            TelephonyManager.EXTRA_STATE_OFFHOOK -> {
+                val serviceIntent = Intent(context, OverlayService::class.java).apply {
+                    action = OverlayService.ACTION_START
+                    putExtra(OverlayService.EXTRA_PHONE_NUMBER, number)
+                }
+                ContextCompat.startForegroundService(context, serviceIntent)
+            }
             TelephonyManager.EXTRA_STATE_IDLE -> {
                 val serviceIntent = Intent(context, OverlayService::class.java).apply {
                     action = OverlayService.ACTION_STOP
