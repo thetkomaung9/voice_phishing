@@ -62,12 +62,16 @@ class TextCallMessage {
   final String id;
   final TextCallSpeaker speaker;
   final String text;
+  final String englishText;
+  final String myanmarText;
   final DateTime timestamp;
 
   const TextCallMessage({
     required this.id,
     required this.speaker,
     required this.text,
+    this.englishText = '',
+    this.myanmarText = '',
     required this.timestamp,
   });
 }
@@ -94,6 +98,8 @@ class AppProvider extends ChangeNotifier {
   CallState _callState = CallState.idle;
   double _riskScore = 0.0;
   String _translationText = '';
+  String _englishTranslationText = '';
+  String _myanmarTranslationText = '';
   String _transcriptText = '';
   bool _isWarning = false;
   final List<CallLog> _callLogs = [];
@@ -109,6 +115,8 @@ class AppProvider extends ChangeNotifier {
   bool get isTextCallActive => _callState == CallState.textCall;
   double get riskScore => _riskScore;
   String get translationText => _translationText;
+  String get englishTranslationText => _englishTranslationText;
+  String get myanmarTranslationText => _myanmarTranslationText;
   String get transcriptText => _transcriptText;
   bool get isWarning => _isWarning;
   List<CallLog> get callLogs => _callLogs;
@@ -160,6 +168,8 @@ class AppProvider extends ChangeNotifier {
     _riskScore = 0.0;
     _isWarning = false;
     _translationText = '';
+    _englishTranslationText = '';
+    _myanmarTranslationText = '';
     _transcriptText = '';
     _assessment = const PhishingAssessment.safe();
     _textCallMessages.clear();
@@ -171,7 +181,13 @@ class AppProvider extends ChangeNotifier {
     final micGranted = await Permission.microphone.isGranted;
     if (micGranted) {
       _nativeSub = _native.callEvents.listen((event) {
-        unawaited(processTranscript(event.transcript));
+        unawaited(
+          processTranscript(
+            event.transcript,
+            englishTranslation: event.englishTranslation,
+            myanmarTranslation: event.myanmarTranslation,
+          ),
+        );
       });
     }
   }
@@ -179,10 +195,20 @@ class AppProvider extends ChangeNotifier {
   Future<void> processTranscript(
     String transcript, {
     String? translatedText,
+    String? englishTranslation,
+    String? myanmarTranslation,
   }) async {
     final requestId = ++_translationRequestId;
     _transcriptText = transcript;
-    _translationText = translatedText ?? transcript;
+    if (englishTranslation?.trim().isNotEmpty ?? false) {
+      _englishTranslationText = englishTranslation!.trim();
+    }
+    if (myanmarTranslation?.trim().isNotEmpty ?? false) {
+      _myanmarTranslationText = myanmarTranslation!.trim();
+    }
+    _translationText = _translationForSelectedLanguage(
+      fallback: translatedText ?? transcript,
+    );
     _assessment = _analyzer.analyze(transcript);
     _riskScore = _assessment.score;
 
@@ -199,25 +225,62 @@ class AppProvider extends ChangeNotifier {
     if (_callState == CallState.textCall) {
       _appendTextCallMessage(
         speaker: TextCallSpeaker.caller,
-        text: translatedText ?? transcript,
+        text: transcript,
+        englishText: _englishTranslationText,
+        myanmarText: _myanmarTranslationText,
       );
     }
     notifyListeners();
 
-    if (translatedText != null || transcript.trim().isEmpty) {
+    if (transcript.trim().isEmpty) {
       return;
     }
 
-    final translated = await _translation.translateText(
-      text: transcript,
-      targetLanguageCode: _selectedLanguage.cloudLanguageCode,
-    );
+    final needsEnglish = _englishTranslationText.isEmpty &&
+        _selectedLanguage != Language.english &&
+        translatedText == null;
+    final translations = await Future.wait<String?>([
+      if (needsEnglish)
+        _translation.translateText(
+          text: transcript,
+          targetLanguageCode: Language.english.cloudLanguageCode,
+        )
+      else
+        Future<String?>.value(null),
+      if (_myanmarTranslationText.isEmpty || translatedText != null)
+        _translation.translateText(
+          text: transcript,
+          targetLanguageCode: Language.burmese.cloudLanguageCode,
+        )
+      else
+        Future<String?>.value(null),
+      if (translatedText == null)
+        _translation.translateText(
+          text: transcript,
+          targetLanguageCode: _selectedLanguage.cloudLanguageCode,
+        )
+      else
+        Future<String?>.value(translatedText),
+    ]);
 
-    if (requestId != _translationRequestId || translated == null) {
+    if (requestId != _translationRequestId) {
       return;
     }
 
-    _translationText = translated;
+    final english = translations[0];
+    final myanmar = translations[1];
+    final selected = translations[2];
+    if (english?.trim().isNotEmpty ?? false) {
+      _englishTranslationText = english!.trim();
+    }
+    if (myanmar?.trim().isNotEmpty ?? false) {
+      _myanmarTranslationText = myanmar!.trim();
+    }
+    if (selected?.trim().isNotEmpty ?? false) {
+      _translationText = selected!.trim();
+    } else {
+      _translationText = _translationForSelectedLanguage(fallback: transcript);
+    }
     notifyListeners();
   }
 
@@ -244,7 +307,9 @@ class AppProvider extends ChangeNotifier {
     if (latestCallerText.isNotEmpty) {
       _appendTextCallMessage(
         speaker: TextCallSpeaker.caller,
-        text: latestCallerText,
+        text: _transcriptText,
+        englishText: _englishTranslationText,
+        myanmarText: _myanmarTranslationText,
       );
     }
 
@@ -284,6 +349,8 @@ class AppProvider extends ChangeNotifier {
     _isWarning = false;
     _riskScore = 0.0;
     _translationText = '';
+    _englishTranslationText = '';
+    _myanmarTranslationText = '';
     _transcriptText = '';
     _currentCaller = '';
     _assessment = const PhishingAssessment.safe();
@@ -380,6 +447,8 @@ class AppProvider extends ChangeNotifier {
   void _appendTextCallMessage({
     required TextCallSpeaker speaker,
     required String text,
+    String englishText = '',
+    String myanmarText = '',
   }) {
     final trimmed = text.trim();
     if (trimmed.isEmpty ||
@@ -394,9 +463,27 @@ class AppProvider extends ChangeNotifier {
         id: DateTime.now().microsecondsSinceEpoch.toString(),
         speaker: speaker,
         text: trimmed,
+        englishText: englishText.trim(),
+        myanmarText: myanmarText.trim(),
         timestamp: DateTime.now(),
       ),
     );
+  }
+
+  String _translationForSelectedLanguage({required String fallback}) {
+    switch (_selectedLanguage) {
+      case Language.burmese:
+        return _myanmarTranslationText.isNotEmpty
+            ? _myanmarTranslationText
+            : fallback;
+      case Language.english:
+        return _englishTranslationText.isNotEmpty
+            ? _englishTranslationText
+            : fallback;
+      case Language.vietnamese:
+      case Language.chinese:
+        return fallback;
+    }
   }
 
   @override
