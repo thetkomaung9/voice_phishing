@@ -3,7 +3,15 @@ import '../theme/app_colors.dart';
 
 class TranslationBubble extends StatelessWidget {
   final String text;
-  const TranslationBubble({super.key, required this.text});
+  final String englishText;
+  final String myanmarText;
+
+  const TranslationBubble({
+    super.key,
+    required this.text,
+    this.englishText = '',
+    this.myanmarText = '',
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -42,16 +50,59 @@ class TranslationBubble extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              height: 1.6,
+          if (myanmarText.trim().isNotEmpty)
+            _TranslationLine(label: 'Myanmar', text: myanmarText),
+          if (englishText.trim().isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(
+                top: myanmarText.trim().isNotEmpty ? 10 : 0,
+              ),
+              child: _TranslationLine(label: 'English', text: englishText),
             ),
-          ),
+          if (myanmarText.trim().isEmpty && englishText.trim().isEmpty)
+            Text(
+              text,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                height: 1.6,
+              ),
+            ),
         ],
       ),
+    );
+  }
+}
+
+class _TranslationLine extends StatelessWidget {
+  final String label;
+  final String text;
+
+  const _TranslationLine({required this.label, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            height: 1.6,
+          ),
+        ),
+      ],
     );
   }
 }

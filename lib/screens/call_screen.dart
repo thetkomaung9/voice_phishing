@@ -163,9 +163,13 @@ class CallScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          if (provider.translationText.isNotEmpty)
+          if (provider.translationText.isNotEmpty ||
+              provider.englishTranslationText.isNotEmpty ||
+              provider.myanmarTranslationText.isNotEmpty)
             TranslationBubble(
               text: provider.translationText,
+              englishText: provider.englishTranslationText,
+              myanmarText: provider.myanmarTranslationText,
             ).animate().slideY(begin: 0.2, duration: 300.ms),
           const Spacer(),
           if (provider.callState == CallState.active)
