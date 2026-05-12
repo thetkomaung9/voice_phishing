@@ -200,14 +200,12 @@ class AppProvider extends ChangeNotifier {
   }) async {
     final requestId = ++_translationRequestId;
     _transcriptText = transcript;
-    if (englishTranslation?.trim().isNotEmpty ?? false) {
-      _englishTranslationText = englishTranslation!.trim();
-    } else if (translatedText?.trim().isNotEmpty ?? false) {
-      _englishTranslationText = translatedText!.trim();
-    }
-    if (myanmarTranslation?.trim().isNotEmpty ?? false) {
-      _myanmarTranslationText = myanmarTranslation!.trim();
-    }
+    _englishTranslationText = (englishTranslation?.trim().isNotEmpty ?? false)
+        ? englishTranslation!.trim()
+        : (translatedText?.trim() ?? '');
+    _myanmarTranslationText = (myanmarTranslation?.trim().isNotEmpty ?? false)
+        ? myanmarTranslation!.trim()
+        : '';
     _translationText = _translationForSelectedLanguage(
       fallback: translatedText ?? transcript,
     );
@@ -220,7 +218,8 @@ class AppProvider extends ChangeNotifier {
         _stateBeforeWarning = _callState;
       }
       _callState = CallState.warning;
-    } else if (_callState != CallState.ars && _callState != CallState.textCall) {
+    } else if (_callState != CallState.ars &&
+        _callState != CallState.textCall) {
       _callState = CallState.active;
     }
 
@@ -238,7 +237,8 @@ class AppProvider extends ChangeNotifier {
       return;
     }
 
-    final needsEnglish = _englishTranslationText.isEmpty &&
+    final needsEnglish =
+        _englishTranslationText.isEmpty &&
         _selectedLanguage != Language.english &&
         translatedText == null;
     final translations = await Future.wait<String?>([
@@ -285,6 +285,14 @@ class AppProvider extends ChangeNotifier {
       }
     } else {
       _translationText = _translationForSelectedLanguage(fallback: transcript);
+    }
+    if (_callState == CallState.textCall) {
+      _appendTextCallMessage(
+        speaker: TextCallSpeaker.caller,
+        text: transcript,
+        englishText: _englishTranslationText,
+        myanmarText: _myanmarTranslationText,
+      );
     }
     notifyListeners();
   }
@@ -456,8 +464,27 @@ class AppProvider extends ChangeNotifier {
     String myanmarText = '',
   }) {
     final trimmed = text.trim();
-    if (trimmed.isEmpty ||
-        (_lastTextCallMessage == trimmed && _lastTextCallSpeaker == speaker)) {
+    if (trimmed.isEmpty) {
+      return;
+    }
+
+    if (_lastTextCallMessage == trimmed && _lastTextCallSpeaker == speaker) {
+      if (_textCallMessages.isNotEmpty &&
+          (englishText.trim().isNotEmpty || myanmarText.trim().isNotEmpty)) {
+        final last = _textCallMessages.last;
+        _textCallMessages[_textCallMessages.length - 1] = TextCallMessage(
+          id: last.id,
+          speaker: last.speaker,
+          text: last.text,
+          englishText: englishText.trim().isNotEmpty
+              ? englishText.trim()
+              : last.englishText,
+          myanmarText: myanmarText.trim().isNotEmpty
+              ? myanmarText.trim()
+              : last.myanmarText,
+          timestamp: last.timestamp,
+        );
+      }
       return;
     }
 
