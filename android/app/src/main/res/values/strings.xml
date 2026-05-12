@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="samsung_text_call_accessibility_description">Read visible Samsung Text Call text so Safe-Call can detect voice phishing warnings.</string>
+</resources>
