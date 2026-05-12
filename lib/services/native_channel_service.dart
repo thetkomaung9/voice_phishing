@@ -4,11 +4,15 @@ import '../models/phishing_assessment.dart';
 
 class CallEvent {
   final String transcript;
+  final String englishTranslation;
+  final String myanmarTranslation;
   final PhishingAssessment assessment;
   final String phoneNumber;
 
   const CallEvent({
     required this.transcript,
+    required this.englishTranslation,
+    required this.myanmarTranslation,
     required this.assessment,
     required this.phoneNumber,
   });
@@ -25,6 +29,8 @@ class NativeChannelService {
       final map = Map<String, dynamic>.from(raw as Map);
       return CallEvent(
         transcript: map['transcript'] as String? ?? '',
+        englishTranslation: map['english_translation'] as String? ?? '',
+        myanmarTranslation: map['myanmar_translation'] as String? ?? '',
         phoneNumber: map['phone_number'] as String? ?? 'Unknown',
         assessment: PhishingAssessment.fromJson(map),
       );
