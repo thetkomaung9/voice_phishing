@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class CloudTranslationService {
-  static const _apiKey = String.fromEnvironment('GOOGLE_CLOUD_TRANSLATE_API_KEY');
+  static const _apiKey = String.fromEnvironment(
+    'GOOGLE_CLOUD_TRANSLATE_API_KEY',
+  );
   static final Uri _translateUri = Uri.parse(
     'https://translation.googleapis.com/language/translate/v2',
   );

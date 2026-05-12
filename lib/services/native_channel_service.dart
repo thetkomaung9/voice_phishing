@@ -58,8 +58,8 @@ class NativeChannelService {
   Future<void> setPreferredLanguage(String languageCode) => _method
       .invokeMethod('setPreferredLanguage', {'languageCode': languageCode});
 
-  Future<void> setCloudTranslationApiKey(String apiKey) => _method
-      .invokeMethod('setCloudTranslationApiKey', {'apiKey': apiKey});
+  Future<void> setCloudTranslationApiKey(String apiKey) =>
+      _method.invokeMethod('setCloudTranslationApiKey', {'apiKey': apiKey});
 
   Future<String> getPreferredLanguage() async =>
       await _method.invokeMethod<String>('getPreferredLanguage') ?? 'en';

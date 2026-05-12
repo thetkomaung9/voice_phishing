@@ -34,8 +34,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       final overlayEnabled = await _native.hasOverlayPermission();
       final callScreeningEnabled = await _native.isCallScreeningEnabled();
-      final textCallCaptureEnabled =
-          await _native.isSamsungTextCallCaptureEnabled();
+      final textCallCaptureEnabled = await _native
+          .isSamsungTextCallCaptureEnabled();
       if (!mounted) return;
       setState(() {
         _overlayEnabled = overlayEnabled;
@@ -68,9 +68,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           _SectionHeader(title: 'Phone Integration'),
           _SettingsTile(
-            leading: const Icon(Icons.phone_in_talk_rounded, color: AppColors.primary),
+            leading: const Icon(
+              Icons.phone_in_talk_rounded,
+              color: AppColors.primary,
+            ),
             title: 'Use Original Phone UI',
-            subtitle: 'Keep Samsung/Android call screen and add Safe-Call overlay',
+            subtitle:
+                'Keep Samsung/Android call screen and add Safe-Call overlay',
             trailing: _StatusPill(
               label: _callScreeningEnabled ? 'Enabled' : 'Setup',
               active: _callScreeningEnabled,
@@ -83,7 +87,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _SettingsTile(
             leading: const Icon(Icons.layers_rounded, color: AppColors.accent),
             title: 'Overlay Permission',
-            subtitle: 'Allow translation and phishing warnings over incoming calls',
+            subtitle:
+                'Allow translation and phishing warnings over incoming calls',
             trailing: _StatusPill(
               label: _overlayEnabled ? 'Allowed' : 'Grant',
               active: _overlayEnabled,
@@ -94,10 +99,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           _SettingsTile(
-            leading: const Icon(Icons.mic_rounded, color: AppColors.textSecondary),
+            leading: const Icon(
+              Icons.mic_rounded,
+              color: AppColors.textSecondary,
+            ),
             title: 'Microphone Permission',
             subtitle: 'Needed for live transcription during calls',
-            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white38),
+            trailing: const Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.white38,
+            ),
             onTap: () async {
               await Permission.microphone.request();
               await _refreshIntegrationStatus();
@@ -210,10 +221,14 @@ class _StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: active ? AppColors.accent.withValues(alpha: 0.18) : Colors.white12,
+        color: active
+            ? AppColors.accent.withValues(alpha: 0.18)
+            : Colors.white12,
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: active ? AppColors.accent.withValues(alpha: 0.35) : Colors.white24,
+          color: active
+              ? AppColors.accent.withValues(alpha: 0.35)
+              : Colors.white24,
         ),
       ),
       child: Text(
