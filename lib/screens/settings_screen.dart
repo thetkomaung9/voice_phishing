@@ -162,7 +162,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: Switch(
               value: provider.protectionEnabled,
               onChanged: (_) => provider.toggleProtection(),
-              activeColor: AppColors.primary,
+              activeThumbColor: AppColors.primary,
             ),
           ),
           const SizedBox(height: 24),
@@ -294,7 +294,7 @@ class _SettingsTile extends StatelessWidget {
                 ],
               ),
             ),
-            if (trailing != null) trailing!,
+            ?trailing,
           ],
         ),
       ),
