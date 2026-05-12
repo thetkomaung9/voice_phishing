@@ -7,6 +7,7 @@ object AppSettings {
     private const val PREFS_NAME = "safe_call_settings"
     private const val KEY_PROTECTION_ENABLED = "protection_enabled"
     private const val KEY_TARGET_LANGUAGE = "target_language"
+    private const val KEY_CLOUD_TRANSLATE_API_KEY = "cloud_translate_api_key"
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -24,5 +25,12 @@ object AppSettings {
 
     fun setTargetLanguage(context: Context, languageCode: String) {
         prefs(context).edit().putString(KEY_TARGET_LANGUAGE, languageCode).apply()
+    }
+
+    fun getCloudTranslateApiKey(context: Context): String =
+        prefs(context).getString(KEY_CLOUD_TRANSLATE_API_KEY, "") ?: ""
+
+    fun setCloudTranslateApiKey(context: Context, apiKey: String) {
+        prefs(context).edit().putString(KEY_CLOUD_TRANSLATE_API_KEY, apiKey).apply()
     }
 }
