@@ -108,12 +108,15 @@ class OverlayService : Service() {
             onFinal = { final ->
                 if (final.isNotBlank()) {
                     fullTranscript.append(" ").append(final)
-                    translationManager?.translate(final) { translated ->
-                        updateOverlayTranslation(translated)
-                    }
                     val result = detector.analyze(fullTranscript.toString())
                     updateOverlayRisk(result)
-                    emitEvent(final, result)
+                    translationManager?.translate(final) { englishTranslation ->
+                        updateOverlayEnglishTranslation(englishTranslation)
+                        emitEvent(final, result, englishTranslation = englishTranslation)
+                    } ?: emitEvent(final, result)
+                    translationManager?.translatePreferred(final) { preferredTranslation ->
+                        updateOverlayPreferredTranslation(preferredTranslation)
+                    }
                 }
             }
         )
@@ -125,12 +128,19 @@ class OverlayService : Service() {
         translationManager?.downloadModelIfNeeded {}
     }
 
-    private fun emitEvent(transcript: String, result: PhishingResult) {
+    private fun emitEvent(
+        transcript: String,
+        result: PhishingResult,
+        englishTranslation: String = "",
+        myanmarTranslation: String = ""
+    ) {
         scope.launch {
             CallEventBus._events.emit(
                 mapOf(
                     "type" to "update",
                     "transcript" to transcript,
+                    "english_translation" to englishTranslation,
+                    "myanmar_translation" to myanmarTranslation,
                     "risk_level" to result.riskLevel,
                     "is_phishing" to result.isPhishing,
                     "alert_level" to result.alertLevel,
@@ -192,9 +202,15 @@ class OverlayService : Service() {
         }
     }
 
-    private fun updateOverlayTranslation(text: String) {
+    private fun updateOverlayEnglishTranslation(text: String) {
         overlayView?.post {
-            overlayView?.findViewById<TextView>(R.id.tvTranslation)?.text = text
+            overlayView?.findViewById<TextView>(R.id.tvEnglishTranslation)?.text = text
+        }
+    }
+
+    private fun updateOverlayPreferredTranslation(text: String) {
+        overlayView?.post {
+            overlayView?.findViewById<TextView>(R.id.tvPreferredTranslation)?.text = text
         }
     }
 

@@ -121,6 +121,25 @@ class _TextCallPanelState extends State<TextCallPanel> {
                               height: 1.45,
                             ),
                           ),
+                          if (message.myanmarText.isNotEmpty ||
+                              message.englishText.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            if (message.myanmarText.isNotEmpty)
+                              _TranslatedTextLine(
+                                label: 'Myanmar',
+                                text: message.myanmarText,
+                              ),
+                            if (message.englishText.isNotEmpty)
+                              Padding(
+                                padding: EdgeInsets.only(
+                                  top: message.myanmarText.isNotEmpty ? 8 : 0,
+                                ),
+                                child: _TranslatedTextLine(
+                                  label: 'English',
+                                  text: message.englishText,
+                                ),
+                              ),
+                          ],
                         ],
                       ),
                     ),
@@ -239,5 +258,47 @@ class _TextCallPanelState extends State<TextCallPanel> {
       case TextCallSpeaker.caller:
         return AppColors.card;
     }
+  }
+}
+
+class _TranslatedTextLine extends StatelessWidget {
+  final String label;
+  final String text;
+
+  const _TranslatedTextLine({required this.label, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              height: 1.45,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

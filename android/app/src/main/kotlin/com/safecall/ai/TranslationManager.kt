@@ -7,16 +7,29 @@ import com.google.mlkit.nl.translate.TranslatorOptions
 
 class TranslationManager(targetLanguage: String = TranslateLanguage.ENGLISH) {
 
-    private val options = TranslatorOptions.Builder()
+    private val englishOptions = TranslatorOptions.Builder()
         .setSourceLanguage(TranslateLanguage.KOREAN)
-        .setTargetLanguage(targetLanguage)
+        .setTargetLanguage(TranslateLanguage.ENGLISH)
+        .build()
+    private val targetLanguageCode =
+        TranslateLanguage.fromLanguageTag(targetLanguage) ?: TranslateLanguage.ENGLISH
+    private val targetOptions = TranslatorOptions.Builder()
+        .setSourceLanguage(TranslateLanguage.KOREAN)
+        .setTargetLanguage(targetLanguageCode)
         .build()
 
-    private val translator: Translator = Translation.getClient(options)
+    private val englishTranslator: Translator = Translation.getClient(englishOptions)
+    private val targetTranslator: Translator? =
+        if (targetLanguageCode == TranslateLanguage.ENGLISH) null else Translation.getClient(targetOptions)
 
     fun downloadModelIfNeeded(onReady: () -> Unit) {
-        translator.downloadModelIfNeeded()
-            .addOnSuccessListener { onReady() }
+        englishTranslator.downloadModelIfNeeded()
+            .addOnSuccessListener {
+                targetTranslator?.downloadModelIfNeeded()
+                    ?.addOnSuccessListener { onReady() }
+                    ?.addOnFailureListener { onReady() }
+                    ?: onReady()
+            }
             .addOnFailureListener { onReady() } // proceed even if download fails
     }
 
@@ -25,10 +38,25 @@ class TranslationManager(targetLanguage: String = TranslateLanguage.ENGLISH) {
             onResult("")
             return
         }
-        translator.translate(text)
+        englishTranslator.translate(text)
             .addOnSuccessListener { translated -> onResult(translated) }
             .addOnFailureListener { onResult(text) } // fallback: pass through original
     }
 
-    fun close() = translator.close()
+    fun translatePreferred(text: String, onResult: (String) -> Unit) {
+        if (text.isBlank()) {
+            onResult("")
+            return
+        }
+
+        val translator = targetTranslator ?: englishTranslator
+        translator.translate(text)
+            .addOnSuccessListener { translated -> onResult(translated) }
+            .addOnFailureListener { onResult(text) }
+    }
+
+    fun close() {
+        englishTranslator.close()
+        targetTranslator?.close()
+    }
 }
