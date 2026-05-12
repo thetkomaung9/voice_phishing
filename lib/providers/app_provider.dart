@@ -528,6 +528,9 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> _loadNativeSettings() async {
     try {
+      if (_translation.isConfigured) {
+        await _native.setCloudTranslationApiKey(_translation.apiKey);
+      }
       _protectionEnabled = await _native.getProtectionEnabled();
       _selectedLanguage = languageFromNativeLanguageCode(
         await _native.getPreferredLanguage(),

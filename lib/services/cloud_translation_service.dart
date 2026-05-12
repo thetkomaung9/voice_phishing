@@ -9,6 +9,7 @@ class CloudTranslationService {
   );
 
   bool get isConfigured => _apiKey.isNotEmpty;
+  String get apiKey => _apiKey;
 
   Future<String?> translateText({
     required String text,

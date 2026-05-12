@@ -80,6 +80,11 @@ class MainActivity : FlutterActivity() {
                         AppSettings.setTargetLanguage(this, languageCode)
                         result.success(null)
                     }
+                    "setCloudTranslationApiKey" -> {
+                        val apiKey = call.argument<String>("apiKey").orEmpty()
+                        AppSettings.setCloudTranslateApiKey(this, apiKey)
+                        result.success(null)
+                    }
                     "getPreferredLanguage" -> {
                         result.success(AppSettings.getTargetLanguage(this))
                     }
