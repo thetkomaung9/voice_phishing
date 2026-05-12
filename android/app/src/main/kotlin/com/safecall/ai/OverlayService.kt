@@ -136,7 +136,7 @@ class OverlayService : Service() {
 
     private fun ensureTranslator() {
         translationManager?.close()
-        translationManager = TranslationManager(AppSettings.getTargetLanguage(this))
+        translationManager = TranslationManager(this, AppSettings.getTargetLanguage(this))
         translationManager?.downloadModelIfNeeded {}
     }
 

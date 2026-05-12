@@ -1,26 +1,37 @@
 package com.safecall.ai
 
+import android.content.Context
 import com.google.mlkit.nl.translate.TranslateLanguage
 import com.google.mlkit.nl.translate.Translation
 import com.google.mlkit.nl.translate.Translator
 import com.google.mlkit.nl.translate.TranslatorOptions
 
-class TranslationManager(targetLanguage: String = TranslateLanguage.ENGLISH) {
+class TranslationManager(
+    context: Context,
+    private val targetLanguage: String = TranslateLanguage.ENGLISH
+) {
 
     private val englishOptions = TranslatorOptions.Builder()
         .setSourceLanguage(TranslateLanguage.KOREAN)
         .setTargetLanguage(TranslateLanguage.ENGLISH)
         .build()
     private val targetLanguageCode =
-        TranslateLanguage.fromLanguageTag(targetLanguage) ?: TranslateLanguage.ENGLISH
-    private val targetOptions = TranslatorOptions.Builder()
-        .setSourceLanguage(TranslateLanguage.KOREAN)
-        .setTargetLanguage(targetLanguageCode)
-        .build()
+        TranslateLanguage.fromLanguageTag(targetLanguage)
+    private val cloudTranslationClient =
+        CloudTranslationClient(AppSettings.getCloudTranslateApiKey(context))
 
     private val englishTranslator: Translator = Translation.getClient(englishOptions)
     private val targetTranslator: Translator? =
-        if (targetLanguageCode == TranslateLanguage.ENGLISH) null else Translation.getClient(targetOptions)
+        if (targetLanguageCode == null || targetLanguageCode == TranslateLanguage.ENGLISH) {
+            null
+        } else {
+            Translation.getClient(
+                TranslatorOptions.Builder()
+                    .setSourceLanguage(TranslateLanguage.KOREAN)
+                    .setTargetLanguage(targetLanguageCode)
+                    .build()
+            )
+        }
 
     fun downloadModelIfNeeded(onReady: () -> Unit) {
         englishTranslator.downloadModelIfNeeded()
@@ -49,10 +60,17 @@ class TranslationManager(targetLanguage: String = TranslateLanguage.ENGLISH) {
             return
         }
 
+        if (targetLanguage == "my") {
+            cloudTranslationClient.translate(text, targetLanguage, onResult)
+            return
+        }
+
         val translator = targetTranslator ?: englishTranslator
         translator.translate(text)
             .addOnSuccessListener { translated -> onResult(translated) }
-            .addOnFailureListener { onResult(text) }
+            .addOnFailureListener {
+                cloudTranslationClient.translate(text, targetLanguage, onResult)
+            }
     }
 
     fun close() {
