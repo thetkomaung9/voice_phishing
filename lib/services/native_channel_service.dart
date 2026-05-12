@@ -67,6 +67,13 @@ class NativeChannelService {
   Future<bool> isCallScreeningEnabled() async =>
       await _method.invokeMethod<bool>('isCallScreeningEnabled') ?? false;
 
+  Future<void> openAccessibilitySettings() =>
+      _method.invokeMethod('openAccessibilitySettings');
+
+  Future<bool> isSamsungTextCallCaptureEnabled() async =>
+      await _method.invokeMethod<bool>('isSamsungTextCallCaptureEnabled') ??
+      false;
+
   Future<void> speakTextCallMessage(
     String text, {
     required String languageCode,

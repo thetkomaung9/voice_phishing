@@ -16,6 +16,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final NativeChannelService _native = NativeChannelService();
   bool _overlayEnabled = false;
   bool _callScreeningEnabled = false;
+  bool _textCallCaptureEnabled = false;
 
   @override
   void initState() {
@@ -33,16 +34,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       final overlayEnabled = await _native.hasOverlayPermission();
       final callScreeningEnabled = await _native.isCallScreeningEnabled();
+      final textCallCaptureEnabled =
+          await _native.isSamsungTextCallCaptureEnabled();
       if (!mounted) return;
       setState(() {
         _overlayEnabled = overlayEnabled;
         _callScreeningEnabled = callScreeningEnabled;
+        _textCallCaptureEnabled = textCallCaptureEnabled;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _overlayEnabled = false;
         _callScreeningEnabled = false;
+        _textCallCaptureEnabled = false;
       });
     }
   }
@@ -95,6 +100,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white38),
             onTap: () async {
               await Permission.microphone.request();
+              await _refreshIntegrationStatus();
+            },
+          ),
+          _SettingsTile(
+            leading: const Icon(
+              Icons.text_fields_rounded,
+              color: AppColors.warning,
+            ),
+            title: 'Samsung Text Call Capture',
+            subtitle:
+                'Read visible Samsung Text Call text for scam detection and translation',
+            trailing: _StatusPill(
+              label: _textCallCaptureEnabled ? 'Enabled' : 'Setup',
+              active: _textCallCaptureEnabled,
+            ),
+            onTap: () async {
+              await _native.openAccessibilitySettings();
               await _refreshIntegrationStatus();
             },
           ),

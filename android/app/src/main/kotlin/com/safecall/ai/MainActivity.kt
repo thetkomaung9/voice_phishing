@@ -6,6 +6,7 @@ import android.app.role.RoleManager
 import android.os.Build
 import android.provider.Settings
 import android.speech.tts.TextToSpeech
+import android.text.TextUtils
 import java.util.Locale
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -89,6 +90,13 @@ class MainActivity : FlutterActivity() {
                     "isCallScreeningEnabled" -> {
                         result.success(isCallScreeningEnabled())
                     }
+                    "openAccessibilitySettings" -> {
+                        startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                        result.success(null)
+                    }
+                    "isSamsungTextCallCaptureEnabled" -> {
+                        result.success(isSamsungTextCallCaptureEnabled())
+                    }
                     "speakTextCallMessage" -> {
                         val text = call.argument<String>("text").orEmpty()
                         val languageCode = call.argument<String>("languageCode") ?: "en"
@@ -146,6 +154,22 @@ class MainActivity : FlutterActivity() {
 
         val roleManager = getSystemService(RoleManager::class.java) ?: return false
         return roleManager.isRoleHeld(RoleManager.ROLE_CALL_SCREENING)
+    }
+
+    private fun isSamsungTextCallCaptureEnabled(): Boolean {
+        val enabledServices = Settings.Secure.getString(
+            contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        ) ?: return false
+        val expected = "$packageName/${SamsungTextCallAccessibilityService::class.java.name}"
+        val splitter = TextUtils.SimpleStringSplitter(':')
+        splitter.setString(enabledServices)
+        for (service in splitter) {
+            if (service.equals(expected, ignoreCase = true)) {
+                return true
+            }
+        }
+        return false
     }
 
     private fun speakTextCallMessage(text: String, languageCode: String) {
