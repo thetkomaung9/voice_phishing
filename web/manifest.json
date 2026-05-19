@@ -1,11 +1,11 @@
 {
-    "name": "voice_phishing",
-    "short_name": "voice_phishing",
+    "name": "Safe-Call AI",
+    "short_name": "Safe-Call",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0D1117",
+    "theme_color": "#1A73E8",
+    "description": "Real-time call protection, translation, and phishing warnings for foreign residents in Korea.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
