@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 
@@ -26,6 +27,9 @@ class FirebaseDatabaseService {
     required String id,
     required Map<String, dynamic> data,
   }) async {
+    if (kIsWeb) {
+      return;
+    }
     if (Firebase.apps.isEmpty) {
       return;
     }
@@ -34,6 +38,9 @@ class FirebaseDatabaseService {
   }
 
   Stream<List<Map<String, dynamic>>> watchCallLogs() {
+    if (kIsWeb) {
+      return Stream.value(const <Map<String, dynamic>>[]);
+    }
     if (Firebase.apps.isEmpty) {
       return Stream.value(const <Map<String, dynamic>>[]);
     }
@@ -46,12 +53,12 @@ class FirebaseDatabaseService {
 
       final entries = value.entries.map((entry) {
         final raw = entry.value;
-        final map = raw is Map ? Map<Object?, Object?>.from(raw) : <Object?, Object?>{};
+        final map = raw is Map
+            ? Map<Object?, Object?>.from(raw)
+            : <Object?, Object?>{};
         return <String, dynamic>{
           'id': entry.key.toString(),
-          ...map.map(
-            (key, item) => MapEntry(key.toString(), item),
-          ),
+          ...map.map((key, item) => MapEntry(key.toString(), item)),
         };
       }).toList();
 
