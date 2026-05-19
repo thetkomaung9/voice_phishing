@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -9,9 +10,11 @@ import 'providers/app_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  // Request microphone + phone-state permissions before any service starts
-  await [Permission.microphone, Permission.phone].request();
+  if (!kIsWeb) {
+    await Firebase.initializeApp();
+    // Request microphone + phone-state permissions before any service starts.
+    await [Permission.microphone, Permission.phone].request();
+  }
   runApp(
     MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => AppProvider())],
