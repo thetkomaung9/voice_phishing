@@ -50,7 +50,7 @@ dependencies {
     // ML Kit on-device translation (Korean ↔ Burmese/Vietnamese/English)
     implementation("com.google.mlkit:translate:17.0.3")
     // Required for flutter_local_notifications and other libraries that use newer Java APIs
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }
 
 flutter {
