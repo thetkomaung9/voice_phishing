@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/app_provider.dart';
 import '../services/native_channel_service.dart';
+import '../models/phishing_assessment.dart';
 import '../theme/app_colors.dart';
 import '../widgets/protection_toggle.dart';
 import '../widgets/emergency_dial_row.dart';
@@ -16,7 +17,8 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> with TickerProviderStateMixin {
+class _DashboardScreenState extends State<DashboardScreen>
+    with TickerProviderStateMixin {
   static final NativeChannelService _native = NativeChannelService();
 
   @override
@@ -31,7 +33,9 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
             CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(child: _buildHeader(context, provider)),
-                SliverToBoxAdapter(child: _buildProtectionCard(context, provider)),
+                SliverToBoxAdapter(
+                  child: _buildProtectionCard(context, provider),
+                ),
                 SliverToBoxAdapter(
                   child: _buildEmergencySection(context, provider),
                 ),
@@ -380,6 +384,122 @@ class _DemoButton extends StatelessWidget {
                 fontSize: 11,
                 height: 1.4,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AlarmBanner extends StatelessWidget {
+  final PhishingAssessment assessment;
+  final VoidCallback onDismiss;
+  final VoidCallback onHangUp;
+
+  const _AlarmBanner({
+    required this.assessment,
+    required this.onDismiss,
+    required this.onHangUp,
+  });
+
+  Color _colorForLevel(int level) {
+    switch (level) {
+      case 3:
+        return AppColors.danger;
+      case 2:
+        return Colors.orangeAccent;
+      case 1:
+        return AppColors.accent;
+      default:
+        return AppColors.primary;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _colorForLevel(assessment.riskLevel);
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [color.withOpacity(0.12), Colors.black.withOpacity(0.4)],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withOpacity(0.18)),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 12),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    assessment.message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    assessment.reason,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: color,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: onHangUp,
+                  child: const Text(
+                    'Hang up',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextButton(
+                  onPressed: onDismiss,
+                  child: const Text(
+                    'Dismiss',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
