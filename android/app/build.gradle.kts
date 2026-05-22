@@ -14,6 +14,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // Enable core library desugaring for libraries that require newer Java APIs
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -47,6 +49,8 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     // ML Kit on-device translation (Korean ↔ Burmese/Vietnamese/English)
     implementation("com.google.mlkit:translate:17.0.3")
+    // Required for flutter_local_notifications and other libraries that use newer Java APIs
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
 }
 
 flutter {
