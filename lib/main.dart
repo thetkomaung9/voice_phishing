@@ -7,11 +7,14 @@ import 'package:permission_handler/permission_handler.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'providers/app_provider.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (!kIsWeb) {
     await Firebase.initializeApp();
+    // Initialize local notifications
+    await NotificationService().init();
     // Request microphone + phone-state permissions before any service starts.
     await [Permission.microphone, Permission.phone].request();
   }
