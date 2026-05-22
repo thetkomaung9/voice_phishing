@@ -9,9 +9,14 @@ import '../widgets/emergency_dial_row.dart';
 import '../widgets/recent_calls_list.dart';
 import 'settings_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> with TickerProviderStateMixin {
   static final NativeChannelService _native = NativeChannelService();
 
   @override
@@ -21,16 +26,36 @@ class DashboardScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: _buildHeader(context, provider)),
-            SliverToBoxAdapter(child: _buildProtectionCard(context, provider)),
-            SliverToBoxAdapter(
-              child: _buildEmergencySection(context, provider),
+        child: Stack(
+          children: [
+            CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(child: _buildHeader(context, provider)),
+                SliverToBoxAdapter(child: _buildProtectionCard(context, provider)),
+                SliverToBoxAdapter(
+                  child: _buildEmergencySection(context, provider),
+                ),
+                SliverToBoxAdapter(child: _buildDemoSection(context, provider)),
+                SliverToBoxAdapter(child: _buildRecentCalls(context, provider)),
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+              ],
             ),
-            SliverToBoxAdapter(child: _buildDemoSection(context, provider)),
-            SliverToBoxAdapter(child: _buildRecentCalls(context, provider)),
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            // Alarm banner overlay
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 350),
+              top: provider.isWarning ? 12 : -120,
+              left: 12,
+              right: 12,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 300),
+                opacity: provider.isWarning ? 1.0 : 0.0,
+                child: _AlarmBanner(
+                  assessment: provider.assessment,
+                  onDismiss: () => provider.dismissWarning(),
+                  onHangUp: () => provider.endCall(),
+                ),
+              ),
+            ),
           ],
         ),
       ),
