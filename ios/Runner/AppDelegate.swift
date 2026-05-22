@@ -26,6 +26,7 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    registerNativeChannels(binaryMessenger: engineBridge.applicationRegistrar.messenger())
   }
 
   private func registerNativeChannels(binaryMessenger: FlutterBinaryMessenger) {
