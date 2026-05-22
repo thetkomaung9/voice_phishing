@@ -6,8 +6,7 @@ class NotificationService {
   static final NotificationService _instance = NotificationService._();
   factory NotificationService() => _instance;
 
-  final FlutterLocalNotificationsPlugin _plugin =
-      FlutterLocalNotificationsPlugin();
+  final dynamic _plugin = FlutterLocalNotificationsPlugin();
   var _initialized = false;
 
   Future<void> init() async {
