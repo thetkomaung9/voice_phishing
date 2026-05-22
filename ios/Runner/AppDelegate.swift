@@ -17,10 +17,11 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    let didFinishLaunching = super.application(application, didFinishLaunchingWithOptions: launchOptions)
     if let controller = window?.rootViewController as? FlutterViewController {
       registerNativeChannels(binaryMessenger: controller.binaryMessenger)
     }
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    return didFinishLaunching
   }
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
