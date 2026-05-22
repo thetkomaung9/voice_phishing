@@ -1,5 +1,6 @@
 import '../models/phishing_assessment.dart';
 import 'realtime_phishing_analyzer.dart';
+import 'notification_service.dart';
 
 class CoverAlarmResult {
   final String maskedMessage;
@@ -25,6 +26,14 @@ class SpamPhishingService {
 
     final shouldAlarm =
         assessment.alertLevel == 'medium' || assessment.alertLevel == 'high';
+
+    // Fire notification asynchronously if alarm is required.
+    if (shouldAlarm) {
+      NotificationService().showAlarmNotification(
+        'Safe-Call Alert',
+        '${assessment.message} — ${assessment.reason}',
+      );
+    }
 
     return CoverAlarmResult(
       maskedMessage: masked,
