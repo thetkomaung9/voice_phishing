@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/app_provider.dart';
@@ -203,8 +202,6 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildDemoSection(BuildContext context, AppProvider provider) {
-    final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
       child: Column(
@@ -224,13 +221,10 @@ class DashboardScreen extends StatelessWidget {
               Expanded(
                 child: _DemoButton(
                   icon: Icons.phone_in_talk_rounded,
-                  label: isIOS
-                      ? 'Set Up iPhone\nPhone UI'
-                      : 'Enable Real\nCall Protection',
+                  label: 'Enable Real\nCall Protection',
                   color: AppColors.danger,
-                  subtitle: isIOS
-                      ? 'Open Call Blocking & Identification for Safe-Call'
-                      : 'Use Samsung/Android call UI with Safe-Call screening',
+                  subtitle:
+                      'Use Samsung/Android call UI with Safe-Call screening',
                   onTap: () async {
                     await _native.openCallScreeningSettings();
                   },
@@ -240,13 +234,10 @@ class DashboardScreen extends StatelessWidget {
               Expanded(
                 child: _DemoButton(
                   icon: Icons.layers_rounded,
-                  label: isIOS
-                      ? 'Open App\nSettings'
-                      : 'Allow Overlay\nTranslation',
+                  label: 'Allow Overlay\nTranslation',
                   color: AppColors.accent,
-                  subtitle: isIOS
-                      ? 'Manage iPhone permissions for Safe-Call'
-                      : 'Show live phishing warnings and translation over calls',
+                  subtitle:
+                      'Show live phishing warnings and translation over calls',
                   onTap: () async {
                     await _native.requestOverlayPermission();
                   },
