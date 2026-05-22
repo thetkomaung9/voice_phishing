@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
@@ -55,6 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
+    final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -72,9 +74,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Icons.phone_in_talk_rounded,
               color: AppColors.primary,
             ),
-            title: 'Use Original Phone UI',
-            subtitle:
-                'Keep Samsung/Android call screen and add Safe-Call overlay',
+            title: isIOS ? 'Use iPhone Phone UI' : 'Use Original Phone UI',
+            subtitle: isIOS
+                ? 'Open Call Blocking & Identification setup for Safe-Call'
+                : 'Keep Samsung/Android call screen and add Safe-Call overlay',
             trailing: _StatusPill(
               label: _callScreeningEnabled ? 'Enabled' : 'Setup',
               active: _callScreeningEnabled,
@@ -84,20 +87,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
               await _refreshIntegrationStatus();
             },
           ),
-          _SettingsTile(
-            leading: const Icon(Icons.layers_rounded, color: AppColors.accent),
-            title: 'Overlay Permission',
-            subtitle:
-                'Allow translation and phishing warnings over incoming calls',
-            trailing: _StatusPill(
-              label: _overlayEnabled ? 'Allowed' : 'Grant',
-              active: _overlayEnabled,
+          if (!isIOS)
+            _SettingsTile(
+              leading: const Icon(
+                Icons.layers_rounded,
+                color: AppColors.accent,
+              ),
+              title: 'Overlay Permission',
+              subtitle:
+                  'Allow translation and phishing warnings over incoming calls',
+              trailing: _StatusPill(
+                label: _overlayEnabled ? 'Allowed' : 'Grant',
+                active: _overlayEnabled,
+              ),
+              onTap: () async {
+                await _native.requestOverlayPermission();
+                await _refreshIntegrationStatus();
+              },
             ),
-            onTap: () async {
-              await _native.requestOverlayPermission();
-              await _refreshIntegrationStatus();
-            },
-          ),
           _SettingsTile(
             leading: const Icon(
               Icons.mic_rounded,
@@ -114,23 +121,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
               await _refreshIntegrationStatus();
             },
           ),
-          _SettingsTile(
-            leading: const Icon(
-              Icons.text_fields_rounded,
-              color: AppColors.warning,
+          if (!isIOS)
+            _SettingsTile(
+              leading: const Icon(
+                Icons.text_fields_rounded,
+                color: AppColors.warning,
+              ),
+              title: 'Samsung Text Call Capture',
+              subtitle:
+                  'Read visible Samsung Text Call text for scam detection and translation',
+              trailing: _StatusPill(
+                label: _textCallCaptureEnabled ? 'Enabled' : 'Setup',
+                active: _textCallCaptureEnabled,
+              ),
+              onTap: () async {
+                await _native.openAccessibilitySettings();
+                await _refreshIntegrationStatus();
+              },
             ),
-            title: 'Samsung Text Call Capture',
-            subtitle:
-                'Read visible Samsung Text Call text for scam detection and translation',
-            trailing: _StatusPill(
-              label: _textCallCaptureEnabled ? 'Enabled' : 'Setup',
-              active: _textCallCaptureEnabled,
-            ),
-            onTap: () async {
-              await _native.openAccessibilitySettings();
-              await _refreshIntegrationStatus();
-            },
-          ),
           const SizedBox(height: 24),
           _SectionHeader(title: 'Language'),
           ...Language.values.map((lang) {
